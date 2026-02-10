@@ -13,6 +13,8 @@ export async function POST(request) {
       );
     }
 
+    // Note: NEXT_PUBLIC_ prefix is intentional - Supabase's anon key is designed to be public.
+    // Security is enforced through Row Level Security (RLS) policies in the database.
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -30,8 +32,10 @@ export async function POST(request) {
       );
     }
 
-    // Note: In production, consider setting session as HTTP-only cookie
-    // instead of returning it in the response body for better security
+    // TODO: For enhanced security, implement HTTP-only cookies for session management
+    // instead of returning the session in the response body. This prevents XSS attacks
+    // from accessing session tokens. Current implementation is acceptable for Supabase's
+    // security model but cookies would be more secure.
     return NextResponse.json({
       success: true,
       message: 'Signed in successfully!',

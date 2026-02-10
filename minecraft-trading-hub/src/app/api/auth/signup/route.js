@@ -30,6 +30,8 @@ export async function POST(request) {
       );
     }
 
+    // Note: NEXT_PUBLIC_ prefix is intentional - Supabase's anon key is designed to be public.
+    // Security is enforced through Row Level Security (RLS) policies in the database.
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -52,7 +54,7 @@ export async function POST(request) {
 
     // Insert profile row with default role 'member'
     // Note: RLS policies should prevent role manipulation by clients
-    const { data: profileData, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .insert([
         {
