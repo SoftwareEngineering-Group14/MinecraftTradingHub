@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 
 export default function SignInForm() {
   const [email, setEmail] = useState("");
@@ -13,17 +12,26 @@ export default function SignInForm() {
     setError("");
     setSuccess("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (error) {
-      setError(error.message);
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Sign in failed");
+        return;
+      }
+
+      setSuccess(data.message);
+    } catch (err) {
+      setError("An unexpected error occurred");
     }
-
-    setSuccess("Signed in successfully!");
   };
 
   return (

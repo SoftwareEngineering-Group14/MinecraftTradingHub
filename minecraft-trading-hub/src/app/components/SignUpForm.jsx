@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 
 export default function SignUpForm() {
   const [email, setEmail] = useState("");
@@ -13,38 +12,28 @@ export default function SignUpForm() {
     setError("");
     setSuccess("");
 
-    const cleanEmail = email.trim().toLowerCase();
-
-    // 1️⃣ Create Supabase Auth user
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password,
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
-    }
-
-    // 2️⃣ Insert profile row with default role 'member'
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .insert([
-        {
-          id: authData.user.id,
-          role: "member",
-          username: cleanEmail.split("@")[0],
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ]);
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (profileError) {
-      setError(profileError.message);
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Sign up failed");
+        return;
+      }
+
+      setSuccess(data.message);
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      setError("An unexpected error occurred");
     }
-
-    setSuccess("Account created! Check your email for confirmation.");
-    setEmail("");
-    setPassword("");
   };
 
   return (
