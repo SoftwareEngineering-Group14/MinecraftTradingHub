@@ -1,4 +1,3 @@
-// src/auth/auth.js
 import { supabase } from '../lib/supabaseClient'
 
 /** Sign up a new user and create profile with default role 'member' */
@@ -19,7 +18,7 @@ export async function signUp(email, password, name) {
       role: 'member',
       created_at: new Date()
     }])
-  
+
   if (profileError) return { error: profileError }
 
   return { user, profile }
