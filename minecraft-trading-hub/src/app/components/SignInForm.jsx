@@ -30,7 +30,8 @@ export default function SignInForm() {
 
       setSuccess(data.message);
     } catch (err) {
-      setError("An unexpected error occurred");
+      console.error("Sign in error:", err);
+      setError("Network error. Please check your connection and try again.");
     }
   };
 

@@ -5,6 +5,7 @@ export async function POST(request) {
   try {
     const { email, password } = await request.json();
 
+    // Input validation
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -22,19 +23,22 @@ export async function POST(request) {
     });
 
     if (error) {
+      console.error('Sign in error:', error);
       return NextResponse.json(
         { error: error.message },
         { status: 401 }
       );
     }
 
+    // Note: In production, consider setting session as HTTP-only cookie
+    // instead of returning it in the response body for better security
     return NextResponse.json({
       success: true,
       message: 'Signed in successfully!',
       session: data.session,
     });
   } catch (error) {
-    console.error('Sign in error:', error);
+    console.error('Unexpected sign in error:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }

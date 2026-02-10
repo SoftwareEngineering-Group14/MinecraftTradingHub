@@ -32,7 +32,8 @@ export default function SignUpForm() {
       setEmail("");
       setPassword("");
     } catch (err) {
-      setError("An unexpected error occurred");
+      console.error("Sign up error:", err);
+      setError("Network error. Please check your connection and try again.");
     }
   };
 

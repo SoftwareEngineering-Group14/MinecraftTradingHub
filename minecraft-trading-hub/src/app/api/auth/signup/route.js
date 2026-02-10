@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Server-side Supabase client with service role for admin operations
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 export async function POST(request) {
   try {
     const { email, password } = await request.json();
 
+    // Input validation
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -16,7 +13,24 @@ export async function POST(request) {
       );
     }
 
-    // Use anon key for auth operations (not service role)
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters long' },
+        { status: 400 }
+      );
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -29,6 +43,7 @@ export async function POST(request) {
     });
 
     if (signUpError) {
+      console.error('Sign up error:', signUpError);
       return NextResponse.json(
         { error: signUpError.message },
         { status: 400 }
@@ -36,6 +51,7 @@ export async function POST(request) {
     }
 
     // Insert profile row with default role 'member'
+    // Note: RLS policies should prevent role manipulation by clients
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .insert([
@@ -47,8 +63,9 @@ export async function POST(request) {
       ]);
 
     if (profileError) {
+      console.error('Profile creation error:', profileError);
       return NextResponse.json(
-        { error: profileError.message },
+        { error: 'Failed to create user profile' },
         { status: 500 }
       );
     }
@@ -59,7 +76,7 @@ export async function POST(request) {
       user: authData.user,
     });
   } catch (error) {
-    console.error('Sign up error:', error);
+    console.error('Unexpected sign up error:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
