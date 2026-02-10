@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from './supabaseClient'
 
 /** Sign up a new user and create profile with default role 'member' */
 export async function signUp(email, password, name) {

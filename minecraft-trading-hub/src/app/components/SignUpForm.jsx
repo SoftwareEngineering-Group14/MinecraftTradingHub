@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 
 export default function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -13,38 +13,33 @@ export default function SignUpForm() {
     setError("");
     setSuccess("");
 
-    const cleanEmail = email.trim().toLowerCase();
-
-    // 1️⃣ Create Supabase Auth user
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password,
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
-    }
-
-    // 2️⃣ Insert profile row with default role 'member'
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .insert([
-        {
-          id: authData.user.id,
-          role: "member",
-          username: cleanEmail.split("@")[0],
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ]);
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+          name,
+        }),
+      });
 
-    if (profileError) {
-      setError(profileError.message);
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to sign up');
+        return;
+      }
+
+      setSuccess("Account created successfully!");
+      setEmail("");
+      setPassword("");
+      setName("");
+    } catch (err) {
+      setError("An error occurred. Please try again.");
     }
-
-    setSuccess("Account created! Check your email for confirmation.");
-    setEmail("");
-    setPassword("");
   };
 
   return (
@@ -53,6 +48,15 @@ export default function SignUpForm() {
 
       {error && <p className="text-red-500">{error}</p>}
       {success && <p className="text-green-500">{success}</p>}
+
+      <input
+        type="text"
+        placeholder="Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="border p-2 rounded"
+        required
+      />
 
       <input
         type="email"
