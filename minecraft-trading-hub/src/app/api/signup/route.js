@@ -46,7 +46,7 @@ export async function POST(request) {
     if (!isOriginAllowed(origin, allowedOrigins)) {
       return NextResponse.json(
         { error: ERROR_ORIGIN_NOT_ALLOWED },
-        { status: STATUS_FORBIDDEN }
+        { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
       );
     }
 
@@ -76,7 +76,7 @@ export async function POST(request) {
   } catch (error) {
     return NextResponse.json(
       { error: ERROR_INTERNAL_SERVER },
-      { status: STATUS_INTERNAL_SERVER_ERROR }
+      { status: STATUS_INTERNAL_SERVER_ERROR, headers: corsHeaders(origin) }
     );
   }
 }

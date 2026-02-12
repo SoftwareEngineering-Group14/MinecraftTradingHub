@@ -1,1 +1,12 @@
+@import url('https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Space+Mono:400,700&display=swap');
 @import "tailwindcss";
+
+
+.font-press-start {
+	font-family: 'Press Start 2P', cursive;
+}
+
+.font-space-mono {
+  font-family: 'Space Mono', monospace;
+}
