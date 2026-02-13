@@ -35,13 +35,11 @@ function corsHeaders(origin) {
   return headers;
 }
 
-// This is a pre-check for CORS preflight requests. It responds to OPTIONS requests with the appropriate CORS headers.
 export async function OPTIONS(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
   return NextResponse.json({}, { headers: corsHeaders(origin) });
 }
 
-// This is the main handler for POST requests to the /api/signin endpoint. It validates the request, checks credentials, and returns  if successful.
 export async function POST(request) {
   try {
     const origin = request.headers.get(HEADER_ORIGIN) || '';
@@ -49,7 +47,7 @@ export async function POST(request) {
     if (!isOriginAllowed(origin, allowedOrigins)) {
       return NextResponse.json(
         { error: ERROR_ORIGIN_NOT_ALLOWED },
-        { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
+        { status: STATUS_FORBIDDEN }
       );
     }
 
@@ -79,7 +77,7 @@ export async function POST(request) {
   } catch (error) {
     return NextResponse.json(
       { error: ERROR_INTERNAL_SERVER },
-      { status: STATUS_INTERNAL_SERVER_ERROR, headers: corsHeaders(origin) }
+      { status: STATUS_INTERNAL_SERVER_ERROR }
     );
   }
 }
