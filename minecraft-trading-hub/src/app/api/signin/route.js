@@ -43,9 +43,9 @@ export async function OPTIONS(request) {
 
 // This is the main handler for POST requests to the /api/signin endpoint. It validates the request, checks credentials, and returns  if successful.
 export async function POST(request) {
+  const origin = request.headers.get(HEADER_ORIGIN) || '';
+  
   try {
-    const origin = request.headers.get(HEADER_ORIGIN) || '';
-
     if (!isOriginAllowed(origin, allowedOrigins)) {
       return NextResponse.json(
         { error: ERROR_ORIGIN_NOT_ALLOWED },
