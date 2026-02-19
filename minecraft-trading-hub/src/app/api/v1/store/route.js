@@ -87,10 +87,11 @@ export async function GET(request) {
       limit = Math.min(limit, 100);
     }
 
-    // Fetch stores from Supabase
+    // Fetch stores from Supabase filtered by the authenticated user's ID
     const { data: stores, error } = await supabase
       .from('user_stores')
-      .select('')
+      .select('*')
+      .eq('owner_id', user.id)
       .limit(limit);
 
     if (error) {

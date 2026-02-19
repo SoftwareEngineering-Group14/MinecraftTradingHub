@@ -103,6 +103,53 @@ describe('/api/v1/store', () => {
       expect(data.error).toBe('Origin not allowed');
     });
 
+    it('should return only stores owned by the authenticated user', async () => {
+      const mockUser = { id: 'user-123', email: 'test@example.com' };
+      const mockStores = [
+        { id: 'store-1', owner_id: 'user-123', description: 'My Store 1' },
+        { id: 'store-2', owner_id: 'user-123', description: 'My Store 2' },
+      ];
+
+      supabase.auth.getUser.mockResolvedValueOnce({
+        data: { user: mockUser },
+        error: null,
+      });
+
+      const mockLimit = jest.fn().mockResolvedValueOnce({
+        data: mockStores,
+        error: null,
+      });
+
+      const mockEq = jest.fn().mockReturnValueOnce({
+        limit: mockLimit,
+      });
+
+      supabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValueOnce({
+          eq: mockEq,
+        }),
+      });
+
+      const request = new NextRequest('http://localhost:3000/api/v1/store', {
+        method: 'GET',
+        headers: {
+          Origin: 'http://localhost:3000',
+          Authorization: 'Bearer valid-token',
+        },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.stores).toEqual(mockStores);
+      expect(mockEq).toHaveBeenCalledWith('owner_id', 'user-123');
+      // Verify all stores have the correct owner_id
+      data.stores.forEach(store => {
+        expect(store.owner_id).toBe('user-123');
+      });
+    });
+
     it('should return stores with default limit of 10', async () => {
       const mockUser = { id: '123', email: 'test@example.com' };
       const mockStores = [
@@ -120,9 +167,13 @@ describe('/api/v1/store', () => {
         error: null,
       });
 
+      const mockEq = jest.fn().mockReturnValueOnce({
+        limit: mockLimit,
+      });
+
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
-          limit: mockLimit,
+          eq: mockEq,
         }),
       });
 
@@ -140,6 +191,7 @@ describe('/api/v1/store', () => {
       expect(response.status).toBe(200);
       expect(data.stores).toEqual(mockStores);
       expect(data.count).toBe(2);
+      expect(mockEq).toHaveBeenCalledWith('owner_id', '123');
       expect(mockLimit).toHaveBeenCalledWith(10);
     });
 
@@ -161,9 +213,13 @@ describe('/api/v1/store', () => {
         error: null,
       });
 
+      const mockEq = jest.fn().mockReturnValueOnce({
+        limit: mockLimit,
+      });
+
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
-          limit: mockLimit,
+          eq: mockEq,
         }),
       });
 
@@ -180,6 +236,7 @@ describe('/api/v1/store', () => {
 
       expect(response.status).toBe(200);
       expect(data.stores).toEqual(mockStores);
+      expect(mockEq).toHaveBeenCalledWith('owner_id', '123');
       expect(mockLimit).toHaveBeenCalledWith(5);
     });
 
@@ -220,9 +277,13 @@ describe('/api/v1/store', () => {
         error: null,
       });
 
+      const mockEq = jest.fn().mockReturnValueOnce({
+        limit: mockLimit,
+      });
+
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
-          limit: mockLimit,
+          eq: mockEq,
         }),
       });
 
@@ -237,6 +298,7 @@ describe('/api/v1/store', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
+      expect(mockEq).toHaveBeenCalledWith('owner_id', '123');
       expect(mockLimit).toHaveBeenCalledWith(100);
     });
 
@@ -250,9 +312,11 @@ describe('/api/v1/store', () => {
 
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
-          limit: jest.fn().mockResolvedValueOnce({
-            data: null,
-            error: { message: 'Database error' },
+          eq: jest.fn().mockReturnValueOnce({
+            limit: jest.fn().mockResolvedValueOnce({
+              data: null,
+              error: { message: 'Database error' },
+            }),
           }),
         }),
       });
