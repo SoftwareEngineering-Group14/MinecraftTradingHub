@@ -40,9 +40,9 @@ export async function OPTIONS(request) {
 }
 
 export async function POST(request) {
-  try {
-    const origin = request.headers.get(HEADER_ORIGIN) || '';
+  const origin = request.headers.get(HEADER_ORIGIN) || '';
 
+  try {
     if (!isOriginAllowed(origin, allowedOrigins)) {
       return NextResponse.json(
         { error: ERROR_ORIGIN_NOT_ALLOWED },

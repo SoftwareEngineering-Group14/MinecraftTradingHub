@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 Copy and paste the following lines and state the changes before merging each commit to MAIN. Latest changes should be shown at the top.
 # [Version: ]
 # [PR: ] : []
-- Enter Change Details Here
+- Enter Change Details Here!
+
+-------------------------------------------------------------------------------
+# [Version: 1.0.5]
+# [PR: 33] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/33]
+- Added /api/v1/store route with GET and POST endpoints for store management
+- Removed SQLite dependencies (sqlite, sqlite3, tar) that are incompatible with Vercel serverless deployment
+- Added Jest testing framework and related dependencies (@testing-library/jest-dom, @testing-library/react, jest, jest-environment-jsdom)
+- Fixed origin variable scope issue in signin and signup API routes to prevent ReferenceError in catch blocks
 
 -------------------------------------------------------------------------------
 # [Version: 1.0.4]
