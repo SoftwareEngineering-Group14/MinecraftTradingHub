@@ -41,7 +41,7 @@ export async function OPTIONS(request) {
 
 export async function POST(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
-  
+
   try {
     if (!isOriginAllowed(origin, allowedOrigins)) {
       return NextResponse.json(
