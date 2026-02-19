@@ -8,6 +8,14 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here
 
 -------------------------------------------------------------------------------
+# [Version: 1.0.5]
+# [PR: 33] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/33]
+- Added /api/v1/store route with GET and POST endpoints for store management
+- Removed SQLite dependencies (sqlite, sqlite3, tar) that are incompatible with Vercel serverless deployment
+- Added Jest testing framework and related dependencies (@testing-library/jest-dom, @testing-library/react, jest, jest-environment-jsdom)
+- Fixed origin variable scope issue in signin and signup API routes to prevent ReferenceError in catch blocks
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.4]
 # [PR: 23] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/23]
 - Added Sign Up Authentication Page connected to Supabase database
