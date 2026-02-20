@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createServerSideClient } from '../../../lib/supabaseClient';
-import { isOriginAllowed } from '../../../lib/serverFunctions';
+import { createServerSideClient } from '@/app/lib/supabaseClient';
+import { isOriginAllowed, corsHeaders } from '@/app/lib/serverFunctions';
 import {
   HEADER_ORIGIN,
-  HEADER_ACCESS_CONTROL_ALLOW_METHODS,
-  HEADER_ACCESS_CONTROL_ALLOW_HEADERS,
-  HEADER_ACCESS_CONTROL_ALLOW_ORIGIN,
   HEADER_CONTENT_TYPE,
   HEADER_AUTHORIZATION,
   STATUS_FORBIDDEN,
@@ -15,40 +12,31 @@ import {
   ERROR_ORIGIN_NOT_ALLOWED,
   ERROR_INTERNAL_SERVER,
   ALLOWED_ORIGINS_DEVELOPMENT,
-} from '../../../lib/serverConstants';
+} from '@/app/lib/serverConstants';
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
-
-function corsHeaders(origin) {
-  const headers = {
-    [HEADER_ACCESS_CONTROL_ALLOW_METHODS]: 'POST, OPTIONS',
-    [HEADER_ACCESS_CONTROL_ALLOW_HEADERS]: `${HEADER_CONTENT_TYPE}, ${HEADER_AUTHORIZATION}`,
-  };
-
-  if (isOriginAllowed(origin, allowedOrigins)) {
-    headers[HEADER_ACCESS_CONTROL_ALLOW_ORIGIN] = origin;
-  }
-
-  return headers;
-}
+const ALLOWED_METHODS = 'POST, OPTIONS';
+const ALLOWED_HEADERS = `${HEADER_CONTENT_TYPE}, ${HEADER_AUTHORIZATION}`;
 
 export async function OPTIONS(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
-  return NextResponse.json({}, { headers: corsHeaders(origin) });
+  return NextResponse.json({}, { 
+    headers: corsHeaders(origin, allowedOrigins, ALLOWED_METHODS, ALLOWED_HEADERS) 
+  });
 }
 
 export async function POST(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
+  const getHeaders = () => corsHeaders(origin, allowedOrigins, ALLOWED_METHODS, ALLOWED_HEADERS);
 
   if (!isOriginAllowed(origin, allowedOrigins)) {
     return NextResponse.json(
       { error: ERROR_ORIGIN_NOT_ALLOWED },
-      { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
+      { status: STATUS_FORBIDDEN, headers: getHeaders() }
     );
   }
 
   try {
-    // CRITICAL FIX: We must await the async supabase client initialization
     const supabase = await createServerSideClient();
 
     const body = await request.json();
@@ -57,37 +45,37 @@ export async function POST(request) {
     if (!interests || !Array.isArray(interests)) {
       return NextResponse.json(
         { error: 'Interests must be an array of selected tags.' },
-        { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
+        { status: STATUS_BAD_REQUEST, headers: getHeaders() }
       );
     }
 
-    // Verify session using the properly initialized client
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401, headers: corsHeaders(origin) }
+        { status: 401, headers: getHeaders() }
       );
     }
 
-    // Update the 'interests' text[] column in the database
     const { error } = await supabase
       .from('profiles')
-      .update({ interests: interests })
+      .update({ 
+        interests: interests,
+      })
       .eq('id', session.user.id);
 
     if (error) throw error;
 
     return NextResponse.json(
       { message: 'Interests updated successfully' },
-      { status: STATUS_OK, headers: corsHeaders(origin) }
+      { status: STATUS_OK, headers: getHeaders() }
     );
 
   } catch (error) {
     console.error('Interests API Error:', error);
     return NextResponse.json(
       { error: ERROR_INTERNAL_SERVER },
-      { status: STATUS_INTERNAL_SERVER_ERROR, headers: corsHeaders(origin) }
+      { status: STATUS_INTERNAL_SERVER_ERROR, headers: getHeaders() }
     );
   }
 }

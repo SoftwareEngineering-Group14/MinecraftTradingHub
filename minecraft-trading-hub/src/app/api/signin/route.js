@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createServerSideClient } from '../../lib/supabaseClient'; // Factory helper
-import { isOriginAllowed } from '../../lib/serverFunctions';
-import { signIn } from '../../lib/auth'; // Updated helper
+import { createServerSideClient } from '@/app/lib/supabaseClient'; 
+import { isOriginAllowed, corsHeaders } from '@/app/lib/serverFunctions';
+import { signIn } from '@/app/lib/auth'; 
 import {
   HEADER_ORIGIN,
-  HEADER_ACCESS_CONTROL_ALLOW_METHODS,
-  HEADER_ACCESS_CONTROL_ALLOW_HEADERS,
-  HEADER_ACCESS_CONTROL_ALLOW_ORIGIN,
   HEADER_CONTENT_TYPE,
   HEADER_AUTHORIZATION,
   STATUS_FORBIDDEN,
@@ -19,75 +16,73 @@ import {
   ERROR_MISSING_FIELDS,
   ERROR_INVALID_CREDENTIALS,
   ALLOWED_ORIGINS_DEVELOPMENT,
-} from '../../lib/serverConstants';
+} from '@/app/lib/serverConstants';
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
-
-function corsHeaders(origin) {
-  const headers = {
-    [HEADER_ACCESS_CONTROL_ALLOW_METHODS]: 'POST, OPTIONS',
-    [HEADER_ACCESS_CONTROL_ALLOW_HEADERS]: `${HEADER_CONTENT_TYPE}, ${HEADER_AUTHORIZATION}`,
-  };
-
-  if (isOriginAllowed(origin, allowedOrigins)) {
-    headers[HEADER_ACCESS_CONTROL_ALLOW_ORIGIN] = origin;
-  }
-
-  return headers;
-}
+const ALLOWED_METHODS = 'POST, OPTIONS';
+const ALLOWED_HEADERS = `${HEADER_CONTENT_TYPE}, ${HEADER_AUTHORIZATION}`;
 
 export async function OPTIONS(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
-  return NextResponse.json({}, { headers: corsHeaders(origin) });
+  return NextResponse.json({}, { 
+    headers: corsHeaders(origin, allowedOrigins, ALLOWED_METHODS, ALLOWED_HEADERS) 
+  });
 }
 
 export async function POST(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
+  const getHeaders = () => corsHeaders(origin, allowedOrigins, ALLOWED_METHODS, ALLOWED_HEADERS);
 
   try {
-    // 1. CORS Validation
     if (!isOriginAllowed(origin, allowedOrigins)) {
       return NextResponse.json(
         { error: ERROR_ORIGIN_NOT_ALLOWED },
-        { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
+        { status: STATUS_FORBIDDEN, headers: getHeaders() }
       );
     }
 
-    // 2. Initialize the Server-Side Client for this specific request
-    // CRITICAL FIX: Add 'await' for Next.js 16 compatibility
+    // Next.js 16 Async Fix
     const supabase = await createServerSideClient();
+
+    if (!supabase || typeof supabase.from !== 'function') {
+      throw new Error("Supabase client not initialized correctly");
+    }
 
     const body = await request.json();
     const { email, password } = body;
 
-    // 3. Validate input fields
     if (!email || !password) {
       return NextResponse.json(
         { error: ERROR_MISSING_FIELDS },
-        { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
+        { status: STATUS_BAD_REQUEST, headers: getHeaders() }
       );
     }
 
-    // 4. Call the signIn helper with the injected supabase client
     const { session, error } = await signIn(supabase, email, password);
 
-    if (error) {
+    if (error || !session) {
       return NextResponse.json(
         { error: ERROR_INVALID_CREDENTIALS },
-        { status: STATUS_UNAUTHORIZED, headers: corsHeaders(origin) }
+        { status: STATUS_UNAUTHORIZED, headers: getHeaders() }
       );
     }
 
-    // 5. Return success - session cookies are automatically handled by SSR client
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username, interests')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
     return NextResponse.json(
-      { session },
-      { status: STATUS_OK, headers: corsHeaders(origin) }
+      { session, profile }, 
+      { status: STATUS_OK, headers: getHeaders() }
     );
+
   } catch (error) {
     console.error('SignIn Route Error:', error);
     return NextResponse.json(
       { error: ERROR_INTERNAL_SERVER },
-      { status: STATUS_INTERNAL_SERVER_ERROR, headers: corsHeaders(origin) }
+      { status: STATUS_INTERNAL_SERVER_ERROR, headers: getHeaders() }
     );
   }
 }

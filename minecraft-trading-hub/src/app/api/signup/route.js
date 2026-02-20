@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createServerSideClient } from '../../lib/supabaseClient'; // Factory helper
-import { isOriginAllowed } from '../../lib/serverFunctions';
-import { signUp } from '../../lib/auth'; // Updated helper
+import { createServerSideClient } from '@/app/lib/supabaseClient'; 
+import { isOriginAllowed, corsHeaders } from '@/app/lib/serverFunctions'; 
+import { signUp } from '@/app/lib/auth'; 
 import {
   HEADER_ORIGIN,
-  HEADER_ACCESS_CONTROL_ALLOW_METHODS,
-  HEADER_ACCESS_CONTROL_ALLOW_HEADERS,
-  HEADER_ACCESS_CONTROL_ALLOW_ORIGIN,
   HEADER_CONTENT_TYPE,
   HEADER_AUTHORIZATION,
   STATUS_FORBIDDEN,
@@ -17,74 +14,61 @@ import {
   ERROR_INTERNAL_SERVER,
   ERROR_MISSING_FIELDS,
   ALLOWED_ORIGINS_DEVELOPMENT,
-} from '../../lib/serverConstants';
+} from '@/app/lib/serverConstants';
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
-
-function corsHeaders(origin) {
-  const headers = {
-    [HEADER_ACCESS_CONTROL_ALLOW_METHODS]: 'POST, OPTIONS',
-    [HEADER_ACCESS_CONTROL_ALLOW_HEADERS]: `${HEADER_CONTENT_TYPE}, ${HEADER_AUTHORIZATION}`,
-  };
-
-  if (isOriginAllowed(origin, allowedOrigins)) {
-    headers[HEADER_ACCESS_CONTROL_ALLOW_ORIGIN] = origin;
-  }
-
-  return headers;
-}
+const ALLOWED_METHODS = 'POST, OPTIONS';
+const ALLOWED_HEADERS = `${HEADER_CONTENT_TYPE}, ${HEADER_AUTHORIZATION}`;
 
 export async function OPTIONS(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
-  return NextResponse.json({}, { headers: corsHeaders(origin) });
+  return NextResponse.json({}, { 
+    headers: corsHeaders(origin, allowedOrigins, ALLOWED_METHODS, ALLOWED_HEADERS) 
+  });
 }
 
 export async function POST(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
+  const getHeaders = () => corsHeaders(origin, allowedOrigins, ALLOWED_METHODS, ALLOWED_HEADERS);
 
   try {
-    // 1. CORS Validation
     if (!isOriginAllowed(origin, allowedOrigins)) {
       return NextResponse.json(
         { error: ERROR_ORIGIN_NOT_ALLOWED },
-        { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
+        { status: STATUS_FORBIDDEN, headers: getHeaders() }
       );
     }
 
-    // 2. Initialize the Server-Side Client
-    // CRITICAL CHANGE: We MUST await this because cookies() is async in Next.js 16
     const supabase = await createServerSideClient();
 
     const body = await request.json();
     const { email, password, name } = body;
 
-    // 3. Validate required fields
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: ERROR_MISSING_FIELDS },
-        { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
+        { status: STATUS_BAD_REQUEST, headers: getHeaders() }
       );
     }
 
-    // 4. Call updated signUp helper with the supabase client
     const { user, profile, error } = await signUp(supabase, email, password, name);
 
     if (error) {
       return NextResponse.json(
         { error: error.message },
-        { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
+        { status: STATUS_BAD_REQUEST, headers: getHeaders() }
       );
     }
 
     return NextResponse.json(
       { user, profile },
-      { status: STATUS_CREATED, headers: corsHeaders(origin) }
+      { status: STATUS_CREATED, headers: getHeaders() }
     );
   } catch (error) {
     console.error('Signup Route Error:', error);
     return NextResponse.json(
       { error: ERROR_INTERNAL_SERVER },
-      { status: STATUS_INTERNAL_SERVER_ERROR, headers: corsHeaders(origin) }
+      { status: STATUS_INTERNAL_SERVER_ERROR, headers: getHeaders() }
     );
   }
 }

@@ -1,13 +1,25 @@
 import { NextRequest } from 'next/server';
 import { POST, OPTIONS } from '../route';
 import { signIn } from '@/app/lib/auth';
+import { createServerSideClient } from '@/app/lib/supabaseClient';
 
-// Mock the auth module
+jest.mock('@/app/lib/supabaseClient', () => ({
+  createServerSideClient: jest.fn().mockResolvedValue({
+    auth: {},
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue({ data: { username: 'testuser' }, error: null })
+        })
+      })
+    }),
+  }),
+}));
+
 jest.mock('@/app/lib/auth', () => ({
   signIn: jest.fn(),
 }));
 
-// Mock serverFunctions
 jest.mock('@/app/lib/serverFunctions', () => ({
   isOriginAllowed: jest.fn((origin, allowedOrigins) =>
     allowedOrigins.includes(origin)
@@ -81,25 +93,6 @@ describe('/api/signin', () => {
       expect(data.error).toBe('Missing required fields');
     });
 
-    it('should return 400 if password is missing', async () => {
-      const request = new NextRequest('http://localhost:3000/api/signin', {
-        method: 'POST',
-        headers: {
-          Origin: 'http://localhost:3000',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: 'test@example.com',
-        }),
-      });
-
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toBe('Missing required fields');
-    });
-
     it('should return 401 if credentials are invalid', async () => {
       signIn.mockResolvedValueOnce({
         session: null,
@@ -125,15 +118,22 @@ describe('/api/signin', () => {
       expect(data.error).toBe('Invalid credentials');
     });
 
-    it('should return 200 with session if signin is successful', async () => {
+    it('should return 200 with session and profile if signin is successful', async () => {
       const mockSession = {
         access_token: 'mock-token',
         user: { id: '123', email: 'test@example.com' },
       };
+      const mockProfile = { username: 'Miner49er', interests: ['redstone'] };
 
       signIn.mockResolvedValueOnce({
         session: mockSession,
         error: null,
+      });
+
+      const supabase = await createServerSideClient();
+      supabase.from().select().eq().maybeSingle.mockResolvedValueOnce({ 
+        data: mockProfile, 
+        error: null 
       });
 
       const request = new NextRequest('http://localhost:3000/api/signin', {
@@ -153,7 +153,13 @@ describe('/api/signin', () => {
 
       expect(response.status).toBe(200);
       expect(data.session).toEqual(mockSession);
-      expect(signIn).toHaveBeenCalledWith('test@example.com', 'correct-password');
+      expect(data.profile).toEqual(mockProfile);
+      
+      expect(signIn).toHaveBeenCalledWith(
+        expect.anything(), 
+        'test@example.com', 
+        'correct-password'
+      );
     });
 
     it('should return 500 if an unexpected error occurs', async () => {

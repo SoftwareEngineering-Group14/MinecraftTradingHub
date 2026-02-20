@@ -11,7 +11,6 @@ export default function UsernamePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Simple frontend validation
     if (username.trim().length < 3) {
       setError("Username must be at least 3 characters.");
       return;
@@ -24,13 +23,14 @@ export default function UsernamePage() {
       const res = await fetch('/api/onboarding/username', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim() }), // Trim whitespace
+        body: JSON.stringify({ username: username.trim() }), 
       });
 
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Failed to update username');
 
+      router.refresh();
       router.push('/onboarding/interests');
     } catch (err) {
       setError(err.message);
@@ -63,6 +63,7 @@ export default function UsernamePage() {
               required
               minLength={3}
               maxLength={20}
+              autoFocus
             />
             {error && (
               <p className="text-red-500 font-space-mono text-xs text-center animate-pulse">

@@ -1,17 +1,29 @@
 import { NextRequest } from 'next/server';
 import { POST, OPTIONS } from '../route';
 import { signUp } from '@/app/lib/auth';
+import { createServerSideClient } from '@/app/lib/supabaseClient';
 
-// Mock the auth module
+jest.mock('@/app/lib/supabaseClient', () => ({
+  createServerSideClient: jest.fn().mockResolvedValue({
+    auth: {},
+    from: jest.fn(),
+  }),
+}));
+
 jest.mock('@/app/lib/auth', () => ({
   signUp: jest.fn(),
 }));
 
-// Mock serverFunctions
+// Mock serverFunctions (Ethan's logic)
 jest.mock('@/app/lib/serverFunctions', () => ({
   isOriginAllowed: jest.fn((origin, allowedOrigins) =>
     allowedOrigins.includes(origin)
   ),
+  corsHeaders: jest.fn((origin, allowedOrigins, methods, headers) => ({
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': methods,
+    'Access-Control-Allow-Headers': headers,
+  })),
 }));
 
 describe('/api/signup', () => {
@@ -180,7 +192,13 @@ describe('/api/signup', () => {
       expect(response.status).toBe(201);
       expect(data.user).toEqual(mockUser);
       expect(data.profile).toEqual(mockProfile);
-      expect(signUp).toHaveBeenCalledWith('test@example.com', 'password123', 'Test User');
+      
+      expect(signUp).toHaveBeenCalledWith(
+        expect.anything(), 
+        'test@example.com', 
+        'password123', 
+        'Test User'
+      );
     });
 
     it('should return 500 if an unexpected error occurs', async () => {

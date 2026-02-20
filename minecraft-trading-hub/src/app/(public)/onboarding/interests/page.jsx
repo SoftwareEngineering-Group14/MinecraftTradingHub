@@ -18,7 +18,7 @@ export default function InterestsPage() {
   };
 
   const handleSubmit = async () => {
-    if (selected.length === 0) return; // Guard clause
+    if (selected.length === 0) return;
     setLoading(true);
     
     try {
@@ -28,12 +28,16 @@ export default function InterestsPage() {
         body: JSON.stringify({ interests: selected }),
       });
 
-      if (!res.ok) throw new Error('Failed to save interests');
+      const data = await res.json();
 
-      // Refreshing the router ensures the layout (which might check for interests) updates
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save interests');
+      }
+
       router.refresh(); 
       router.push('/'); 
     } catch (err) {
+      console.error("Onboarding Error:", err.message);
       alert(err.message);
     } finally {
       setLoading(false);
@@ -57,6 +61,7 @@ export default function InterestsPage() {
           {INTEREST_OPTIONS.map((item) => (
             <button
               key={item}
+              type="button" 
               onClick={() => toggleInterest(item)}
               className={`p-4 border-2 rounded-xl text-xs transition-all flex items-center justify-center text-center h-16 ${
                 selected.includes(item) 
