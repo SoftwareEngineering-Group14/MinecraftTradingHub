@@ -1,19 +1,10 @@
 import { NextRequest } from 'next/server';
 import { GET, OPTIONS } from '../route';
-import { supabase } from '@/app/lib/supabaseClient';
+import { createServerSideClient } from '@/app/lib/supabaseClient';
 
 // Mock the supabaseClient
 jest.mock('@/app/lib/supabaseClient', () => ({
-  supabase: {
-    auth: {
-      getUser: jest.fn(),
-    },
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        limit: jest.fn(),
-      })),
-    })),
-  },
+  createServerSideClient: jest.fn(),
 }));
 
 // Mock serverFunctions
@@ -29,8 +20,17 @@ jest.mock('@/app/lib/serverFunctions', () => ({
 }));
 
 describe('/api/v1/store', () => {
+  let mockSupabase;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSupabase = {
+      auth: {
+        getUser: jest.fn(),
+      },
+      from: jest.fn(),
+    };
+    createServerSideClient.mockResolvedValue(mockSupabase);
   });
 
   describe('OPTIONS', () => {
@@ -64,7 +64,7 @@ describe('/api/v1/store', () => {
     });
 
     it('should return 401 if token is invalid', async () => {
-      supabase.auth.getUser.mockResolvedValueOnce({
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
         data: { user: null },
         error: { message: 'Invalid token' },
       });
@@ -107,7 +107,7 @@ describe('/api/v1/store', () => {
         { id: 'store-2', owner_id: 'user-123', description: 'My Store 2' },
       ];
 
-      supabase.auth.getUser.mockResolvedValueOnce({
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       });
@@ -121,7 +121,7 @@ describe('/api/v1/store', () => {
         limit: mockLimit,
       });
 
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: mockEq,
         }),
@@ -154,7 +154,7 @@ describe('/api/v1/store', () => {
         { id: 2, name: 'Store 2' },
       ];
 
-      supabase.auth.getUser.mockResolvedValueOnce({
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       });
@@ -168,7 +168,7 @@ describe('/api/v1/store', () => {
         limit: mockLimit,
       });
 
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: mockEq,
         }),
@@ -199,7 +199,7 @@ describe('/api/v1/store', () => {
         { id: 3, name: 'Store 3' },
       ];
 
-      supabase.auth.getUser.mockResolvedValueOnce({
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       });
@@ -213,7 +213,7 @@ describe('/api/v1/store', () => {
         limit: mockLimit,
       });
 
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: mockEq,
         }),
@@ -239,7 +239,7 @@ describe('/api/v1/store', () => {
     it('should return 400 if limit parameter is invalid', async () => {
       const mockUser = { id: '123', email: 'test@example.com' };
 
-      supabase.auth.getUser.mockResolvedValueOnce({
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       });
@@ -263,7 +263,7 @@ describe('/api/v1/store', () => {
       const mockUser = { id: '123', email: 'test@example.com' };
       const mockStores = [];
 
-      supabase.auth.getUser.mockResolvedValueOnce({
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       });
@@ -277,7 +277,7 @@ describe('/api/v1/store', () => {
         limit: mockLimit,
       });
 
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: mockEq,
         }),
@@ -301,12 +301,12 @@ describe('/api/v1/store', () => {
     it('should return 500 if database query fails', async () => {
       const mockUser = { id: '123', email: 'test@example.com' };
 
-      supabase.auth.getUser.mockResolvedValueOnce({
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       });
 
-      supabase.from.mockReturnValueOnce({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
             limit: jest.fn().mockResolvedValueOnce({

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { corsHeaders } from "../../../../lib/serverFunctions";
-import { supabase } from "../../../../lib/supabaseClient";
+import { createServerSideClient } from "../../../../lib/supabaseClient";
 import {
   STATUS_OK,
   STATUS_BAD_REQUEST,
@@ -45,6 +45,7 @@ export async function GET(request, { params }) {
     }
 
     const token = authHeader.substring(AUTH_BEARER_PREFIX.length);
+    const supabase = await createServerSideClient();
     const {
       data: { user },
       error: authError
