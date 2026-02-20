@@ -8,6 +8,13 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
+# [Version: 1.0.6]
+# [PR: 37] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/37]
+- Replaced global Supabase client with `createServerSideClient` (using `@supabase/ssr`) in `/api/v1/store` and `/api/v1/[serverId]/stores` routes
+- Added `@supabase/ssr` dependency for proper server-side Supabase client creation with cookie support
+- Updated Jest tests for both routes to mock `createServerSideClient` instead of the global `supabase` instance
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.5]
 # [PR: 33] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/33]
 - Added /api/v1/store route with GET and POST endpoints for store management
