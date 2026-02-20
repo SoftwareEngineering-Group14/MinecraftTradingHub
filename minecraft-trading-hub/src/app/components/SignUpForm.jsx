@@ -3,9 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function SignUpForm() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -20,9 +20,9 @@ export default function SignUpForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: name.trim(),
           email: email.trim().toLowerCase(),
           password,
-          name: name.trim(),
         }),
       });
 
@@ -59,7 +59,7 @@ export default function SignUpForm() {
       <div className="flex flex-col gap-4">
         <input
           type="text"
-          placeholder="Display Name (e.g. Steve)"
+          placeholder="Full Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="auth-input"

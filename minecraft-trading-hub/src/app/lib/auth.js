@@ -19,8 +19,6 @@ export async function signUp(email, password, name) {
       id: authData.user.id,
       name,
       role: 'member',
-      // Supabase usually handles created_at via DEFAULT in the DB,
-      // but keeping it here is fine.
       created_at: new Date().toISOString()
     }]);
 
