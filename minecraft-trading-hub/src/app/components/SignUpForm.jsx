@@ -1,28 +1,28 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignUp = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
+    setLoading(true);
 
     try {
       const response = await fetch('/api/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           password,
-          name,
+          name: name.trim(),
         }),
       });
 
@@ -30,54 +30,68 @@ export default function SignUpForm() {
 
       if (!response.ok) {
         setError(data.error || 'Failed to sign up');
+        setLoading(false);
         return;
       }
 
-      setSuccess("Account created successfully!");
-      setEmail("");
-      setPassword("");
-      setName("");
+      // Pro move: Ensure the server session state is updated before navigating
+      router.refresh();
+      
+      // Navigate to your new nested onboarding path
+      router.push('/onboarding/username');
+      
     } catch (err) {
       setError("An error occurred. Please try again.");
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSignUp} className="flex flex-col gap-4 w-80">
-      <h2 className="text-xl font-bold">Sign Up</h2>
+    <form onSubmit={handleSignUp} className="flex flex-col gap-6 w-full max-w-sm">
+      <div className="text-center">
+        <h2 className="text-2xl font-press-start text-green-800 uppercase leading-normal">Register</h2>
+        <p className="font-space-mono text-gray-500 text-xs mt-2">Create your player profile</p>
+      </div>
 
-      {error && <p className="text-red-500">{error}</p>}
-      {success && <p className="text-green-500">{success}</p>}
+      {error && (
+        <p className="text-red-500 font-space-mono text-xs text-center p-2 bg-red-50 border border-red-200 rounded">
+          {error}
+        </p>
+      )}
 
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="border p-2 rounded"
-        required
-      />
+      <div className="flex flex-col gap-4">
+        <input
+          type="text"
+          placeholder="Display Name (e.g. Steve)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
+          required
+        />
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
+          required
+        />
+      </div>
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="border p-2 rounded"
-        required
-      />
-
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="border p-2 rounded"
-        required
-      />
-
-      <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-        Sign Up
+      <button 
+        type="submit" 
+        disabled={loading}
+        className="w-full py-4 bg-green-700 text-white font-press-start rounded-lg hover:bg-green-800 transition-all shadow-md disabled:bg-gray-400 text-sm active:scale-95"
+      >
+        {loading ? 'CREATING...' : 'CREATE PROFILE'}
       </button>
     </form>
   );
