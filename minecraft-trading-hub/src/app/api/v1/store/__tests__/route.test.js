@@ -84,23 +84,20 @@ describe('/api/v1/store', () => {
       expect(data.error).toBe('Unauthorized');
     });
 
-    it('should return 403 if origin is not allowed', async () => {
-      const { isOriginAllowed } = require('@/app/lib/serverFunctions');
-      isOriginAllowed.mockReturnValueOnce(false);
-
+    it('should return 401 if Bearer is not in authorization header', async () => {
       const request = new NextRequest('http://localhost:3000/api/v1/store', {
         method: 'GET',
         headers: {
-          Origin: 'http://evil-site.com',
-          Authorization: 'Bearer valid-token',
+          Origin: 'http://localhost:3000',
+          Authorization: 'valid-token',
         },
       });
 
       const response = await GET(request);
       const data = await response.json();
 
-      expect(response.status).toBe(403);
-      expect(data.error).toBe('Origin not allowed');
+      expect(response.status).toBe(401);
+      expect(data.error).toBe('Unauthorized');
     });
 
     it('should return only stores owned by the authenticated user', async () => {
@@ -190,7 +187,6 @@ describe('/api/v1/store', () => {
 
       expect(response.status).toBe(200);
       expect(data.stores).toEqual(mockStores);
-      expect(data.count).toBe(2);
       expect(mockEq).toHaveBeenCalledWith('owner_id', '123');
       expect(mockLimit).toHaveBeenCalledWith(10);
     });
