@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerSideClient } from '../../lib/supabaseClient'; // Factory helper
-import { isOriginAllowed } from '../../lib/serverFunctions';
-import { signUp } from '../../lib/auth'; // Updated helper
+import { createServerSideClient } from '../../../lib/supabaseClient';
+import { isOriginAllowed } from '../../../lib/serverFunctions';
 import {
   HEADER_ORIGIN,
   HEADER_ACCESS_CONTROL_ALLOW_METHODS,
@@ -10,14 +9,13 @@ import {
   HEADER_CONTENT_TYPE,
   HEADER_AUTHORIZATION,
   STATUS_FORBIDDEN,
-  STATUS_CREATED,
+  STATUS_OK,
   STATUS_BAD_REQUEST,
   STATUS_INTERNAL_SERVER_ERROR,
   ERROR_ORIGIN_NOT_ALLOWED,
   ERROR_INTERNAL_SERVER,
-  ERROR_MISSING_FIELDS,
   ALLOWED_ORIGINS_DEVELOPMENT,
-} from '../../lib/serverConstants';
+} from '../../../lib/serverConstants';
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
 
@@ -42,46 +40,51 @@ export async function OPTIONS(request) {
 export async function POST(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
 
-  try {
-    // 1. CORS Validation
-    if (!isOriginAllowed(origin, allowedOrigins)) {
-      return NextResponse.json(
-        { error: ERROR_ORIGIN_NOT_ALLOWED },
-        { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
-      );
-    }
+  if (!isOriginAllowed(origin, allowedOrigins)) {
+    return NextResponse.json(
+      { error: ERROR_ORIGIN_NOT_ALLOWED },
+      { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
+    );
+  }
 
-    // 2. Initialize the Server-Side Client
-    // CRITICAL CHANGE: We MUST await this because cookies() is async in Next.js 16
+  try {
+    // CRITICAL FIX: We must await the async supabase client initialization
     const supabase = await createServerSideClient();
 
     const body = await request.json();
-    const { email, password, name } = body;
+    const { interests } = body;
 
-    // 3. Validate required fields
-    if (!email || !password || !name) {
+    if (!interests || !Array.isArray(interests)) {
       return NextResponse.json(
-        { error: ERROR_MISSING_FIELDS },
+        { error: 'Interests must be an array of selected tags.' },
         { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
       );
     }
 
-    // 4. Call updated signUp helper with the supabase client
-    const { user, profile, error } = await signUp(supabase, email, password, name);
-
-    if (error) {
+    // Verify session using the properly initialized client
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       return NextResponse.json(
-        { error: error.message },
-        { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
+        { error: 'Unauthorized' },
+        { status: 401, headers: corsHeaders(origin) }
       );
     }
+
+    // Update the 'interests' text[] column in the database
+    const { error } = await supabase
+      .from('profiles')
+      .update({ interests: interests })
+      .eq('id', session.user.id);
+
+    if (error) throw error;
 
     return NextResponse.json(
-      { user, profile },
-      { status: STATUS_CREATED, headers: corsHeaders(origin) }
+      { message: 'Interests updated successfully' },
+      { status: STATUS_OK, headers: corsHeaders(origin) }
     );
+
   } catch (error) {
-    console.error('Signup Route Error:', error);
+    console.error('Interests API Error:', error);
     return NextResponse.json(
       { error: ERROR_INTERNAL_SERVER },
       { status: STATUS_INTERNAL_SERVER_ERROR, headers: corsHeaders(origin) }
