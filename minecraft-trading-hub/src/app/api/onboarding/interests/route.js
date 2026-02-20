@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { createServerSideClient } from '@/app/lib/supabaseClient'; 
-import { isOriginAllowed, corsHeaders } from '@/app/lib/serverFunctions'; 
-import { signUp } from '@/app/lib/auth'; 
+import { createServerSideClient } from '@/app/lib/supabaseClient';
+import { isOriginAllowed, corsHeaders } from '@/app/lib/serverFunctions';
 import {
   HEADER_ORIGIN,
   HEADER_CONTENT_TYPE,
   HEADER_AUTHORIZATION,
   STATUS_FORBIDDEN,
-  STATUS_CREATED,
+  STATUS_OK,
   STATUS_BAD_REQUEST,
   STATUS_INTERNAL_SERVER_ERROR,
   ERROR_ORIGIN_NOT_ALLOWED,
   ERROR_INTERNAL_SERVER,
-  ERROR_MISSING_FIELDS,
   ALLOWED_ORIGINS_DEVELOPMENT,
 } from '@/app/lib/serverConstants';
 
@@ -31,41 +29,50 @@ export async function POST(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || '';
   const getHeaders = () => corsHeaders(origin, allowedOrigins, ALLOWED_METHODS, ALLOWED_HEADERS);
 
-  try {
-    if (!isOriginAllowed(origin, allowedOrigins)) {
-      return NextResponse.json(
-        { error: ERROR_ORIGIN_NOT_ALLOWED },
-        { status: STATUS_FORBIDDEN, headers: getHeaders() }
-      );
-    }
+  if (!isOriginAllowed(origin, allowedOrigins)) {
+    return NextResponse.json(
+      { error: ERROR_ORIGIN_NOT_ALLOWED },
+      { status: STATUS_FORBIDDEN, headers: getHeaders() }
+    );
+  }
 
+  try {
     const supabase = await createServerSideClient();
 
     const body = await request.json();
-    const { email, password, name } = body;
+    const { interests } = body;
 
-    if (!email || !password || !name) {
+    if (!interests || !Array.isArray(interests)) {
       return NextResponse.json(
-        { error: ERROR_MISSING_FIELDS },
+        { error: 'Interests must be an array of selected tags.' },
         { status: STATUS_BAD_REQUEST, headers: getHeaders() }
       );
     }
 
-    const { user, profile, error } = await signUp(supabase, email, password, name);
-
-    if (error) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       return NextResponse.json(
-        { error: error.message },
-        { status: STATUS_BAD_REQUEST, headers: getHeaders() }
+        { error: 'Unauthorized' },
+        { status: 401, headers: getHeaders() }
       );
     }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        interests: interests,
+      })
+      .eq('id', session.user.id);
+
+    if (error) throw error;
 
     return NextResponse.json(
-      { user, profile },
-      { status: STATUS_CREATED, headers: getHeaders() }
+      { message: 'Interests updated successfully' },
+      { status: STATUS_OK, headers: getHeaders() }
     );
+
   } catch (error) {
-    console.error('Signup Route Error:', error);
+    console.error('Interests API Error:', error);
     return NextResponse.json(
       { error: ERROR_INTERNAL_SERVER },
       { status: STATUS_INTERNAL_SERVER_ERROR, headers: getHeaders() }

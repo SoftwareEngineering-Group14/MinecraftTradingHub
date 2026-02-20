@@ -1,55 +1,61 @@
-import { supabase } from './supabaseClient'
-
-/** Sign up a new user and create profile with default role 'member' */
-export async function signUp(email, password, name) {
-  // 1. Create user in Supabase Auth
-  const { data: user, error: authError } = await supabase.auth.signUp({
+export async function signUp(supabase, email, password, name) {
+  const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
-    password
-  })
-  if (authError) return { error: authError }
+    password,
+    options: {
+      data: {
+        display_name: name, 
+      }
+    }
+  });
 
-  // 2. Insert profile into 'profiles' table
+  if (authError) return { error: authError };
+  if (!authData?.user) return { error: { message: "User creation failed" } };
+
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .insert([{
-      id: user.user.id,
+      id: authData.user.id,
       name,
       role: 'member',
-      created_at: new Date()
     }])
+    .select()
+    .single();
 
-  if (profileError) return { error: profileError }
+  if (profileError) return { error: profileError };
 
-  return { user, profile }
+  return { user: authData.user, profile };
 }
 
-/** Sign in an existing user */
-export async function signIn(email, password) {
-  const { data: session, error } = await supabase.auth.signInWithPassword({
+/**
+ * @param {Object} supabase 
+ */
+export async function signIn(supabase, email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
-  })
-  return { session, error }
+  });
+  return { session: data?.session, error };
 }
 
-/** Sign out current user */
-export async function signOut() {
-  const { error } = await supabase.auth.signOut()
-  return { error }
+export async function signOut(supabase) {
+  const { error } = await supabase.auth.signOut();
+  return { error };
 }
 
-/** Get the role of the currently logged-in user */
-export async function getUserRole() {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+export async function getUserProfile(supabase) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+    .select('*') 
+    .eq('id', session.user.id)
+    .single();
 
-  if (error) return null
-  return profile?.role // 'admin', 'moderator', 'member'
+  if (error) {
+    console.error("Error fetching profile:", error.message);
+    return null;
+  }
+  return profile;
 }

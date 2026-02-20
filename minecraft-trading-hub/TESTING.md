@@ -1,12 +1,11 @@
-# Unit Testing Guide
+# Unit Testing Guide (Updated for Next.js 16 & React 19)
 
 ## Setup
 
 ### 1. Install Dependencies
-
+Because we are using React 19, you **must** use the legacy peer deps flag to resolve testing library conflicts:
 ```bash
-npm install --save-dev jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
-```
+npm install --save-dev jest jest-environment-node @testing-library/react @testing-library/jest-dom --legacy-peer-deps
 
 ### 2. Run Tests
 
