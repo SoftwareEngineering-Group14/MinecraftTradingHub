@@ -34,10 +34,7 @@ export default function SignUpForm() {
         return;
       }
 
-      // Pro move: Ensure the server session state is updated before navigating
       router.refresh();
-      
-      // Navigate to your new nested onboarding path
       router.push('/onboarding/username');
       
     } catch (err) {
@@ -49,12 +46,12 @@ export default function SignUpForm() {
   return (
     <form onSubmit={handleSignUp} className="flex flex-col gap-6 w-full max-w-sm">
       <div className="text-center">
-        <h2 className="text-2xl font-press-start text-green-800 uppercase leading-normal">Register</h2>
+        <h2 className="heading-pixel">Register</h2>
         <p className="font-space-mono text-gray-500 text-xs mt-2">Create your player profile</p>
       </div>
 
       {error && (
-        <p className="text-red-500 font-space-mono text-xs text-center p-2 bg-red-50 border border-red-200 rounded">
+        <p className="error-message">
           {error}
         </p>
       )}
@@ -65,7 +62,7 @@ export default function SignUpForm() {
           placeholder="Display Name (e.g. Steve)"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
+          className="auth-input"
           required
         />
         <input
@@ -73,7 +70,7 @@ export default function SignUpForm() {
           placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
+          className="auth-input"
           required
         />
         <input
@@ -81,7 +78,7 @@ export default function SignUpForm() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
+          className="auth-input"
           required
         />
       </div>
@@ -89,7 +86,7 @@ export default function SignUpForm() {
       <button 
         type="submit" 
         disabled={loading}
-        className="w-full py-4 bg-green-700 text-white font-press-start rounded-lg hover:bg-green-800 transition-all shadow-md disabled:bg-gray-400 text-sm active:scale-95"
+        className="btn-green"
       >
         {loading ? 'CREATING...' : 'CREATE PROFILE'}
       </button>

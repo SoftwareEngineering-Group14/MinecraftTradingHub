@@ -59,5 +59,5 @@ export async function getUserRole() {
     .single();
 
   if (error) return null;
-  return profile?.role; // 'admin', 'moderator', 'member'
+  return profile?.role;
 }

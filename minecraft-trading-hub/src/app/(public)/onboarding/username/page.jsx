@@ -41,10 +41,10 @@ export default function UsernamePage() {
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-xl p-8 md:p-12 bg-white rounded-3xl border-4 border-green-800 shadow-2xl flex flex-col items-center gap-8">
+      <div className="auth-card">
         
         <div className="text-center space-y-2">
-          <h1 className="text-xl md:text-2xl font-press-start text-green-800 uppercase">
+          <h1 className="heading-pixel">
             Set Your Handle
           </h1>
           <p className="font-space-mono text-gray-600 text-sm">
@@ -57,7 +57,7 @@ export default function UsernamePage() {
             <input
               type="text"
               placeholder="Enter Username"
-              className="w-full p-4 border-2 border-green-700 rounded-lg font-space-mono focus:outline-none focus:ring-2 focus:ring-green-500 text-center"
+              className="auth-input text-center"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -75,7 +75,7 @@ export default function UsernamePage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-green-700 text-white font-press-start rounded-lg hover:bg-green-800 transition-all shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+            className="btn-green" 
           >
             {loading ? 'SAVING...' : 'CONTINUE'}
           </button>

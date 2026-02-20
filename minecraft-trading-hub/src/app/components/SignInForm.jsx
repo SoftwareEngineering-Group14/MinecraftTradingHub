@@ -29,17 +29,13 @@ export default function SignInForm() {
         return;
       }
 
-      // Essential for Next.js 16: Refresh the router to pick up the 
-      // new session cookies Ethan's createServerSideClient set.
       router.refresh();
 
-      // Check if the user already has a profile set up
       const hasCompletedOnboarding = data.profile?.username || data.session?.user?.user_metadata?.username;
 
       if (hasCompletedOnboarding) {
         router.push('/'); 
       } else {
-        // Redirect to onboarding if they never finished their profile
         router.push('/onboarding/username');
       }
 
@@ -53,43 +49,39 @@ export default function SignInForm() {
   return (
     <form onSubmit={handleSignIn} className="flex flex-col gap-6 w-full max-w-sm">
       <div className="text-center">
-        <h2 className="text-2xl font-press-start text-green-800 uppercase leading-normal">Login</h2>
+        <h2 className="heading-pixel">Login</h2>
         <p className="font-space-mono text-gray-500 text-xs mt-2">Enter the Trading Hub</p>
       </div>
 
       {error && (
-        <p className="text-red-500 font-space-mono text-xs text-center p-2 bg-red-50 border border-red-200 rounded">
+        <p className="error-message">
           {error}
         </p>
       )}
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-4 border-2 border-green-100 rounded-xl font-space-mono focus:outline-none focus:border-green-700 transition-colors"
-            required
-          />
-        </div>
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="auth-input"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="auth-input"
+          required
+        />
       </div>
 
       <button 
         type="submit" 
         disabled={loading}
-        className="w-full py-4 bg-green-700 text-white font-press-start rounded-lg hover:bg-green-800 transition-all shadow-md disabled:bg-gray-400 text-sm active:scale-95"
+        className="btn-green"
       >
         {loading ? 'AUTHENTICATING...' : 'SIGN IN'}
       </button>
