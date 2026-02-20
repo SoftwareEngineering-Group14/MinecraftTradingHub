@@ -30,7 +30,6 @@ export default function UsernamePage() {
 
       if (!res.ok) throw new Error(data.error || 'Failed to update username');
 
-      router.refresh();
       router.push('/onboarding/interests');
     } catch (err) {
       setError(err.message);
