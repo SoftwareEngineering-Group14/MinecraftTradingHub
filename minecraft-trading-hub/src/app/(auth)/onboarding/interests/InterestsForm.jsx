@@ -1,15 +1,15 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { INTEREST_OPTIONS } from '@/lib/serverConstants';
+import { INTEREST_OPTIONS } from '@/app/lib/serverConstants';
 
-export default function InterestsPage() {
+export default function InterestsForm() {
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const toggleInterest = (interest) => {
-    setSelected(prev => 
+    setSelected(prev =>
       prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]
     );
   };
@@ -17,7 +17,7 @@ export default function InterestsPage() {
   const handleSubmit = async () => {
     if (selected.length === 0) return;
     setLoading(true);
-    
+
     try {
       const res = await fetch('/api/onboarding/interests', {
         method: 'POST',
@@ -29,8 +29,8 @@ export default function InterestsPage() {
 
       if (!res.ok) throw new Error(data.error || 'Failed to save interests');
 
-      router.refresh(); 
-      router.push('/'); 
+      router.refresh();
+      router.push('/');
     } catch (err) {
       console.error("Onboarding Error:", err.message);
       alert(err.message);
@@ -42,7 +42,7 @@ export default function InterestsPage() {
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 p-4">
       <div className="auth-card max-w-2xl">
-        
+
         <div className="text-center space-y-2">
           <h1 className="heading-pixel">
             What Interests You?
@@ -51,12 +51,12 @@ export default function InterestsPage() {
             Select at least one tag to customize your trading experience.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
           {INTEREST_OPTIONS.map((item) => (
             <button
               key={item}
-              type="button" 
+              type="button"
               onClick={() => toggleInterest(item)}
               className={`tag-option ${selected.includes(item) ? 'tag-option-active' : ''}`}
             >

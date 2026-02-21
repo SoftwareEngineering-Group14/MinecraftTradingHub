@@ -51,9 +51,9 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { email, password, name } = body;
+    const { name, email, password } = body;
 
-    if (!email || !password || !name) {
+    if (!name || !email || !password) {
       return NextResponse.json(
         { error: ERROR_MISSING_FIELDS },
         { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
