@@ -1,35 +1,35 @@
-import Link from 'next/link'
+"use client";
+import Link from 'next/link';
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen gap-6 bg-gray-100">
-      <h1 className="text-3xl font-bold">Minecraft Trading Hub - Dashboard</h1>
-      <p className="text-lg text-gray-700">
-        Welcome to your protected dashboard!
-      </p>
+    <div className="dashboard-container">
+      <div className="dashboard-card">
+        <h1 className="heading-pixel">
+          Minecraft Trading Hub
+        </h1>
+        
+        <p className="font-space-mono text-gray-600 text-center">
+          Welcome to your protected dashboard, Player!
+        </p>
 
-      <div className="flex gap-4">
-        <Link
-          href="/signup"
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Sign Up
-        </Link>
+        <div className="auth-divider" />
 
-        <Link
-          href="/signin"
-          className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Sign In
-        </Link>
+        <div className="flex flex-wrap justify-center gap-4 w-full max-w-md">
+          <Link href="/signup" className="btn-green flex-1 text-center">
+            Sign Up
+          </Link>
 
-        <Link
-          href="/dashboard"
-          className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-        >
-          Dashboard
-        </Link>
+          <Link href="/signin" className="btn-green flex-1 text-center">
+            Sign In
+          </Link>
+          
+          {/* Using a secondary style for the dashboard link if needed */}
+          <Link href="/dashboard" className="btn-green flex-1 text-center opacity-80">
+            Refresh
+          </Link>
+        </div>
       </div>
     </div>
-  )
+  );
 }
