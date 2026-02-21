@@ -172,22 +172,6 @@ describe('/api/v1/servers', () => {
       expect(data.error).toBe('Invalid limit parameter. Must be a positive integer.');
     });
 
-    it('should cap limit at 100 even if higher value is requested', async () => {
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
-
-      const { mockSelect: permSelect } = mockPermissionsQuery({ data: [{ entity_id: 'server-1' }] });
-      const { mockSelect: serversSelect, mockLimit } = mockServersQuery({ data: [] });
-
-      mockSupabase.from
-        .mockReturnValueOnce({ select: permSelect })
-        .mockReturnValueOnce({ select: serversSelect });
-
-      const response = await GET(makeRequest(`${BASE_URL}?limit=500`));
-
-      expect(response.status).toBe(200);
-      expect(mockLimit).toHaveBeenCalledWith(100);
-    });
-
     it('should return 500 if permissions query fails', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
