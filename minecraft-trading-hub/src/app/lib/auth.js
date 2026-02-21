@@ -43,19 +43,3 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
   return { error };
 }
-
-/** Get the role of the currently logged-in user */
-export async function getUserRole() {
-  const supabase = await createServerSideClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (error) return null;
-  return profile?.role;
-}

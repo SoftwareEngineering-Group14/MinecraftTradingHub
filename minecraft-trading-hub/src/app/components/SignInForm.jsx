@@ -29,8 +29,6 @@ export default function SignInForm() {
         return;
       }
 
-      router.refresh();
-
       const hasCompletedOnboarding = data.profile?.username || data.session?.user?.user_metadata?.username;
 
       if (hasCompletedOnboarding) {

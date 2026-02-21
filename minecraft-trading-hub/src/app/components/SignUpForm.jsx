@@ -34,7 +34,6 @@ export default function SignUpForm() {
         return;
       }
 
-      router.refresh();
       router.push('/onboarding/username');
       
     } catch (err) {
