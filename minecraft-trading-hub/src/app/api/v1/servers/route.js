@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { handleOptions, authenticateRequest } from "../../../../lib/serverFunctions";
+import { handleOptions, authenticateRequest } from "../../../lib/serverFunctions";
 import {
   STATUS_OK,
   STATUS_BAD_REQUEST,
-  STATUS_FORBIDDEN,
   STATUS_INTERNAL_SERVER_ERROR,
   ERROR_INTERNAL_SERVER,
   ALLOWED_ORIGINS_DEVELOPMENT,
@@ -22,7 +21,7 @@ export async function OPTIONS(request) {
   return handleOptions(request, allowedOrigins, allowedMethods, allowedHeaders, HEADER_ORIGIN);
 }
 
-export async function GET(request, { params }) {
+export async function GET(request) {
   const authResult = await authenticateRequest(request, {
     allowedOrigins,
     allowedMethods,
@@ -42,25 +41,10 @@ export async function GET(request, { params }) {
 
   try {
 
-    const { serverId } = await params;
-
-    // Check the user has read access to this server
-    const { data: permission } = await supabase
-      .from("permissions")
-      .select("can_read")
-      .eq("entity_id", serverId)
-      .eq("user_id", user.id)
-      .single();
-
-    // Single returns null if no record is found, so we can use that to determine if the user has any permissions for this server
-    // If you user .can_read, that will throw an error if permission is null, which is why we use ?. to safely access it
-    if (!permission?.can_read) {
-      return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
-    }
-
-    let limit = 10;
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get("limit");
+
+    let limit = 10;
     if (limitParam) {
       limit = parseInt(limitParam, 10);
       if (isNaN(limit) || limit < 1) {
@@ -71,11 +55,30 @@ export async function GET(request, { params }) {
       }
     }
 
-    const { data: stores, error } = await supabase
-      .from("user_stores")
-      .select("id, server_name, description")
-      .eq("server_id", serverId)
-      .eq("status", "active")
+    //I think this works? Still not fully sure how the permissions table works,
+    // perhaps we take out of the profiles table instead from the servers attribute. 
+    const { data: permissions, error: permissionsError } = await supabase
+      .from("permissions")
+      .select("entity_id")
+      .eq("user_id", user.id);
+
+    if (permissionsError) {
+      console.error("Database error:", permissionsError);
+      return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+    }
+
+    const serverIds = permissions.map(p => p.entity_id);
+
+    if (serverIds.length === 0) {
+      return NextResponse.json({ servers: [] }, { status: STATUS_OK, headers });
+    }
+
+    // Get server details for all servers the user has access to
+    // Need to ask front end team if they expect any other information
+    const { data: servers, error } = await supabase
+      .from("servers")
+      .select("id, display_name, owner_id, mc_version")
+      .in("id", serverIds)
       .limit(limit);
 
     if (error) {
@@ -83,14 +86,9 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
     }
 
-    return NextResponse.json({ stores }, { status: STATUS_OK, headers });
+    return NextResponse.json({ servers }, { status: STATUS_OK, headers });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: ERROR_INTERNAL_SERVER,
-      },
-      {
-        status: STATUS_INTERNAL_SERVER_ERROR, headers
-      });
+    console.error("Server error:", error);
+    return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
   }
 }
