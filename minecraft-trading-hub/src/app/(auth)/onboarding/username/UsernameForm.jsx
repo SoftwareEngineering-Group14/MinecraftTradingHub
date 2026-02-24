@@ -10,7 +10,7 @@ export default function UsernameForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (username.trim().length < 3) {
       setError("Username must be at least 3 characters.");
       return;
@@ -20,10 +20,10 @@ export default function UsernameForm() {
     setError('');
 
     try {
-      const res = await fetch('/api/v1/onboarding/username', {
+      const res = await fetch('/api/onboarding/username', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim() }), 
+        body: JSON.stringify({ username: username.trim() }),
       });
 
       const data = await res.json();
@@ -47,7 +47,7 @@ export default function UsernameForm() {
             Choose the name that other players will see in the Trading Hub.
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
           <div className="space-y-2">
             <input
@@ -69,7 +69,7 @@ export default function UsernameForm() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-green" 
+            className="btn-green"
           >
             {loading ? 'SAVING...' : 'CONTINUE'}
           </button>

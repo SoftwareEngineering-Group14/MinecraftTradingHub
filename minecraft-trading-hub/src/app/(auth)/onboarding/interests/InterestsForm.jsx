@@ -19,7 +19,7 @@ export default function InterestsForm() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/v1/onboarding/interests', {
+      const res = await fetch('/api/onboarding/interests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ interests: selected }),
@@ -29,7 +29,7 @@ export default function InterestsForm() {
 
       if (!res.ok) throw new Error(data.error || 'Failed to save interests');
 
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       console.error("Onboarding Error:", err.message);
       alert(err.message);

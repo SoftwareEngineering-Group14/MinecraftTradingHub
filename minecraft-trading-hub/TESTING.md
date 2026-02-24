@@ -221,6 +221,9 @@ npm test -- --verbose
 
 # Update snapshots (if using snapshot testing)
 npm test -- --updateSnapshot
+
+# Get a visualized board of test coverage
+open coverage/lcov-report/index.html
 ```
 
 ## Resources

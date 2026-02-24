@@ -87,14 +87,20 @@ export const COOKIE_SAME_SITE_STRICT = 'SameSite=Strict';
 export const COOKIE_SAME_SITE_LAX = 'SameSite=Lax';
 export const COOKIE_SAME_SITE_NONE = 'SameSite=None';
 
+// Cookie Configuration for Session Persistence
+export const COOKIE_MAX_AGE_30_DAYS = 60 * 60 * 24 * 30; // 30 days in seconds
+export const COOKIE_MAX_AGE_7_DAYS = 60 * 60 * 24 * 7; // 7 days in seconds
+export const COOKIE_MAX_AGE_1_DAY = 60 * 60 * 24; // 1 day in seconds
+export const COOKIE_PATH_ROOT = '/';
+
 // Domain Interest Constant
 export const INTEREST_OPTIONS = [
-  'Redstone', 
-  'Building', 
-  'PvP', 
-  'Farming', 
-  'Trading', 
-  'Rare Items', 
-  'Hardcore', 
+  'Redstone',
+  'Building',
+  'PvP',
+  'Farming',
+  'Trading',
+  'Rare Items',
+  'Hardcore',
   'Creative'
 ];

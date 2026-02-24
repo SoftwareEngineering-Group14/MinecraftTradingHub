@@ -32,7 +32,7 @@ export default function SignInForm() {
       const hasCompletedOnboarding = data.profile?.username || data.session?.user?.user_metadata?.username;
 
       if (hasCompletedOnboarding) {
-        router.push('/'); 
+        router.push('/dashboard');
       } else {
         router.push('/onboarding/username');
       }
@@ -76,8 +76,8 @@ export default function SignInForm() {
         />
       </div>
 
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         disabled={loading}
         className="btn-green"
       >
