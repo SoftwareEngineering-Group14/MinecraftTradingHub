@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { isOriginAllowed } from '../../lib/serverFunctions';
-import { signUp } from '../../lib/auth';
+import { cookies } from 'next/headers';
+import { isOriginAllowed } from '../../../lib/serverFunctions';
+import { signUp } from '../../../lib/auth';
 import {
   HEADER_ORIGIN,
   HEADER_ACCESS_CONTROL_ALLOW_METHODS,
@@ -9,7 +10,6 @@ import {
   HEADER_CONTENT_TYPE,
   HEADER_AUTHORIZATION,
   STATUS_FORBIDDEN,
-  STATUS_OK,
   STATUS_CREATED,
   STATUS_BAD_REQUEST,
   STATUS_INTERNAL_SERVER_ERROR,
@@ -17,7 +17,9 @@ import {
   ERROR_INTERNAL_SERVER,
   ERROR_MISSING_FIELDS,
   ALLOWED_ORIGINS_DEVELOPMENT,
-} from '../../lib/serverConstants';
+  COOKIE_PATH_ROOT,
+  COOKIE_MAX_AGE_7_DAYS,
+} from '../../../lib/serverConstants';
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
 
@@ -67,6 +69,20 @@ export async function POST(request) {
         { error: error.message },
         { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
       );
+    }
+
+    // Set a session cookie on sign-up so the user is automatically
+    // authenticated for onboarding without needing to log in again.
+    // Cookie options are driven by the constants defined in serverConstants.js.
+    if (user?.session?.access_token) {
+      const cookieStore = await cookies();
+      cookieStore.set('mth_session', user.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: COOKIE_MAX_AGE_7_DAYS,
+        path: COOKIE_PATH_ROOT,
+      });
     }
 
     return NextResponse.json(
