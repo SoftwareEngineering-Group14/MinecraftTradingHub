@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
-import { corsHeaders } from "../../../lib/serverFunctions";
-import { createServerSideClient } from "../../../lib/supabaseClient";
+import { handleOptions, authenticateRequest } from "../../../lib/serverFunctions";
 import {
   STATUS_OK,
   STATUS_BAD_REQUEST,
-  STATUS_UNAUTHORIZED,
   STATUS_INTERNAL_SERVER_ERROR,
-  ERROR_UNAUTHORIZED,
   ERROR_INTERNAL_SERVER,
   ALLOWED_ORIGINS_DEVELOPMENT,
   HEADER_ORIGIN,
   HEADER_AUTHORIZATION,
   AUTH_BEARER_PREFIX,
+  STATUS_UNAUTHORIZED,
+  ERROR_UNAUTHORIZED,
 } from "@/app/lib/serverConstants";
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
@@ -19,30 +18,28 @@ const allowedMethods = "GET, POST, OPTIONS";
 const allowedHeaders = "Content-Type, Authorization";
 
 export async function OPTIONS(request) {
-  const origin = request.headers.get(HEADER_ORIGIN) || "";
-  return NextResponse.json(
-    {},
-    { headers: corsHeaders(origin, allowedOrigins, allowedMethods, allowedHeaders) }
-  );
+  return handleOptions(request, allowedOrigins, allowedMethods, allowedHeaders, HEADER_ORIGIN);
 }
 
 export async function GET(request) {
-  const origin = request.headers.get(HEADER_ORIGIN) || "";
-  const headers = corsHeaders(origin, allowedOrigins, allowedMethods, allowedHeaders);
+  const authResult = await authenticateRequest(request, {
+    allowedOrigins,
+    allowedMethods,
+    allowedHeaders,
+    headerOrigin: HEADER_ORIGIN,
+    headerAuthorization: HEADER_AUTHORIZATION,
+    authBearerPrefix: AUTH_BEARER_PREFIX,
+    statusUnauthorized: STATUS_UNAUTHORIZED,
+    errorUnauthorized: ERROR_UNAUTHORIZED,
+  });
+
+  if (authResult.error) {
+    return authResult.error;
+  }
+
+  const { user, supabase, headers } = authResult;
 
   try {
-    const authHeader = request.headers.get(HEADER_AUTHORIZATION);
-    if (!authHeader || !authHeader.startsWith(AUTH_BEARER_PREFIX)) {
-      return NextResponse.json({ error: ERROR_UNAUTHORIZED }, { status: STATUS_UNAUTHORIZED, headers });
-    }
-
-    const token = authHeader.substring(AUTH_BEARER_PREFIX.length);
-    const supabase = await createServerSideClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json({ error: ERROR_UNAUTHORIZED }, { status: STATUS_UNAUTHORIZED, headers });
-    }
 
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get("limit");
