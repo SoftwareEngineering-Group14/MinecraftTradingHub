@@ -8,6 +8,15 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
+# [Version: 1.0.7]
+# [PR: 38] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/38]
+- Implemented CI Rules for running/checking jest tests
+- Updated Profiles to handle username and interests creation for backend database implementation
+- Converted current style handling to globals.css to keep it simple
+- Roles currently handle Member and Admin for overall app in auth.js
+- Interests have constants to keep api and front end up to date
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.6]
 # [PR: 37] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/37]
 - Replaced global Supabase client with `createServerSideClient` (using `@supabase/ssr`) in `/api/v1/store` and `/api/v1/[serverId]/stores` routes

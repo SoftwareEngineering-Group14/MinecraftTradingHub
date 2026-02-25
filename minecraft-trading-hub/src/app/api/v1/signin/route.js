@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { isOriginAllowed } from '../../lib/serverFunctions';
-import { signUp } from '../../lib/auth';
+import { cookies } from 'next/headers';
+import { isOriginAllowed } from '../../../lib/serverFunctions';
+import { signIn } from '../../../lib/auth';
 import {
   HEADER_ORIGIN,
   HEADER_ACCESS_CONTROL_ALLOW_METHODS,
@@ -10,14 +11,17 @@ import {
   HEADER_AUTHORIZATION,
   STATUS_FORBIDDEN,
   STATUS_OK,
-  STATUS_CREATED,
   STATUS_BAD_REQUEST,
+  STATUS_UNAUTHORIZED,
   STATUS_INTERNAL_SERVER_ERROR,
   ERROR_ORIGIN_NOT_ALLOWED,
   ERROR_INTERNAL_SERVER,
   ERROR_MISSING_FIELDS,
+  ERROR_INVALID_CREDENTIALS,
   ALLOWED_ORIGINS_DEVELOPMENT,
-} from '../../lib/serverConstants';
+  COOKIE_MAX_AGE_30_DAYS,
+  COOKIE_PATH_ROOT,
+} from '../../../lib/serverConstants';
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
 
@@ -51,27 +55,39 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { name, email, password } = body;
+    const { email, password } = body;
 
-    if (!name || !email || !password) {
+    if (!email || !password) {
       return NextResponse.json(
         { error: ERROR_MISSING_FIELDS },
         { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
       );
     }
 
-    const { user, profile, error } = await signUp(email, password, name);
+    const { session, error } = await signIn(email, password);
 
     if (error) {
       return NextResponse.json(
-        { error: error.message },
-        { status: STATUS_BAD_REQUEST, headers: corsHeaders(origin) }
+        { error: ERROR_INVALID_CREDENTIALS },
+        { status: STATUS_UNAUTHORIZED, headers: corsHeaders(origin) }
       );
     }
 
+    // Persist the session token in an HttpOnly cookie so the user stays
+    // logged in across browser restarts. Cookie options are driven by
+    // the constants defined in serverConstants.js.
+    const cookieStore = await cookies();
+    cookieStore.set('mth_session', session.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: COOKIE_MAX_AGE_30_DAYS,
+      path: COOKIE_PATH_ROOT,
+    });
+
     return NextResponse.json(
-      { user, profile },
-      { status: STATUS_CREATED, headers: corsHeaders(origin) }
+      { session },
+      { status: STATUS_OK, headers: corsHeaders(origin) }
     );
   } catch (error) {
     return NextResponse.json(
