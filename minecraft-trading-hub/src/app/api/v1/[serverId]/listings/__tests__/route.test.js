@@ -30,14 +30,10 @@ function mockListingsQuery({ data = MOCK_LISTINGS, error = null } = {}) {
   const queryChain = {
     eq: jest.fn(),
     ilike: jest.fn(),
-    gte: jest.fn(),
-    lte: jest.fn(),
     limit: mockLimit,
   };
   queryChain.eq.mockReturnValue(queryChain);
   queryChain.ilike.mockReturnValue(queryChain);
-  queryChain.gte.mockReturnValue(queryChain);
-  queryChain.lte.mockReturnValue(queryChain);
   const mockSelect = jest.fn().mockReturnValueOnce(queryChain);
   return { mockSelect, queryChain, mockLimit };
 }
@@ -290,38 +286,6 @@ describe(`/api/v1/[serverId]/listings`, () => {
 
       expect(response.status).toBe(200);
       expect(queryChain.eq).toHaveBeenCalledWith('category', 'weapon');
-    });
-
-    it('should filter by minPrice when provided', async () => {
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
-
-      const { mockSelect: permSelect } = mockPermissionQuery();
-      const { mockSelect: listingsSelect, queryChain } = mockListingsQuery();
-
-      mockSupabase.from
-        .mockReturnValueOnce({ select: permSelect })
-        .mockReturnValueOnce({ select: listingsSelect });
-
-      const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { minPrice: 50 }), { params: PARAMS });
-
-      expect(response.status).toBe(200);
-      expect(queryChain.gte).toHaveBeenCalledWith('price', 50);
-    });
-
-    it('should filter by maxPrice when provided', async () => {
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
-
-      const { mockSelect: permSelect } = mockPermissionQuery();
-      const { mockSelect: listingsSelect, queryChain } = mockListingsQuery();
-
-      mockSupabase.from
-        .mockReturnValueOnce({ select: permSelect })
-        .mockReturnValueOnce({ select: listingsSelect });
-
-      const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { maxPrice: 200 }), { params: PARAMS });
-
-      expect(response.status).toBe(200);
-      expect(queryChain.lte).toHaveBeenCalledWith('price', 200);
     });
 
     it('should return 500 if the database query fails', async () => {

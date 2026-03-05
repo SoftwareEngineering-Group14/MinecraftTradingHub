@@ -90,7 +90,7 @@ export async function POST(request, { params }) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { storeId, listingName, listingQuantity, listingCategory, minPrice, maxPrice } = body;
+    const { storeId, listingName, listingQuantity, listingCategory } = body;
 
     if (listingCategory !== undefined && !VALID_CATEGORIES.includes(listingCategory)) {
       return NextResponse.json(
@@ -108,9 +108,6 @@ export async function POST(request, { params }) {
     if (listingName !== undefined) query = query.ilike("name", `%${listingName}%`);
     if (listingQuantity !== undefined) query = query.eq("quantity", listingQuantity);
     if (listingCategory !== undefined) query = query.eq("category", listingCategory);
-    if (minPrice !== undefined) query = query.gte("price", minPrice);
-    if (maxPrice !== undefined) query = query.lte("price", maxPrice);
-
     query = query.limit(limit);
 
     const { data: listings, error } = await query;
