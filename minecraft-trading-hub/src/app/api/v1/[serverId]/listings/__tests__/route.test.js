@@ -32,14 +32,12 @@ function mockListingsQuery({ data = MOCK_LISTINGS, error = null } = {}) {
     ilike: jest.fn(),
     gte: jest.fn(),
     lte: jest.fn(),
-    order: jest.fn(),
     limit: mockLimit,
   };
   queryChain.eq.mockReturnValue(queryChain);
   queryChain.ilike.mockReturnValue(queryChain);
   queryChain.gte.mockReturnValue(queryChain);
   queryChain.lte.mockReturnValue(queryChain);
-  queryChain.order.mockReturnValue(queryChain);
   const mockSelect = jest.fn().mockReturnValueOnce(queryChain);
   return { mockSelect, queryChain, mockLimit };
 }
@@ -230,19 +228,6 @@ describe(`/api/v1/[serverId]/listings`, () => {
       expect(data.error).toBe('Invalid category. Must be one of: food, weapon, tool, armor, potion, enchantments, misc');
     });
 
-    it('should return 400 if sort is not a valid option', async () => {
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
-
-      const { mockSelect: permSelect } = mockPermissionQuery();
-      mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
-      const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { sort: 'invalid_sort' }), { params: PARAMS });
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toBe('Invalid sort option. Must be one of: price_asc, price_desc, quantity_asc, quantity_desc, name_asc, name_desc');
-    });
-
     it('should filter by storeId when provided', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
@@ -254,7 +239,6 @@ describe(`/api/v1/[serverId]/listings`, () => {
         .mockReturnValueOnce({ select: listingsSelect });
 
       const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { storeId: 1 }), { params: PARAMS });
-      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(queryChain.eq).toHaveBeenCalledWith('store_id', 1);
@@ -271,7 +255,6 @@ describe(`/api/v1/[serverId]/listings`, () => {
         .mockReturnValueOnce({ select: listingsSelect });
 
       const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { listingName: 'sword' }), { params: PARAMS });
-      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(queryChain.ilike).toHaveBeenCalledWith('name', '%sword%');
@@ -288,7 +271,6 @@ describe(`/api/v1/[serverId]/listings`, () => {
         .mockReturnValueOnce({ select: listingsSelect });
 
       const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { listingQuantity: 5 }), { params: PARAMS });
-      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(queryChain.eq).toHaveBeenCalledWith('quantity', 5);
@@ -305,7 +287,6 @@ describe(`/api/v1/[serverId]/listings`, () => {
         .mockReturnValueOnce({ select: listingsSelect });
 
       const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { listingCategory: 'weapon' }), { params: PARAMS });
-      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(queryChain.eq).toHaveBeenCalledWith('category', 'weapon');
@@ -322,7 +303,6 @@ describe(`/api/v1/[serverId]/listings`, () => {
         .mockReturnValueOnce({ select: listingsSelect });
 
       const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { minPrice: 50 }), { params: PARAMS });
-      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(queryChain.gte).toHaveBeenCalledWith('price', 50);
@@ -339,44 +319,9 @@ describe(`/api/v1/[serverId]/listings`, () => {
         .mockReturnValueOnce({ select: listingsSelect });
 
       const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { maxPrice: 200 }), { params: PARAMS });
-      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(queryChain.lte).toHaveBeenCalledWith('price', 200);
-    });
-
-    it('should apply sort ascending when sort is price_asc', async () => {
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
-
-      const { mockSelect: permSelect } = mockPermissionQuery();
-      const { mockSelect: listingsSelect, queryChain } = mockListingsQuery();
-
-      mockSupabase.from
-        .mockReturnValueOnce({ select: permSelect })
-        .mockReturnValueOnce({ select: listingsSelect });
-
-      const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { sort: 'price_asc' }), { params: PARAMS });
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(queryChain.order).toHaveBeenCalledWith('price', { ascending: true });
-    });
-
-    it('should apply sort descending when sort is name_desc', async () => {
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
-
-      const { mockSelect: permSelect } = mockPermissionQuery();
-      const { mockSelect: listingsSelect, queryChain } = mockListingsQuery();
-
-      mockSupabase.from
-        .mockReturnValueOnce({ select: permSelect })
-        .mockReturnValueOnce({ select: listingsSelect });
-
-      const response = await POST(makeRequest(BASE_URL, DEFAULT_HEADERS, { sort: 'name_desc' }), { params: PARAMS });
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(queryChain.order).toHaveBeenCalledWith('name', { ascending: false });
     });
 
     it('should return 500 if the database query fails', async () => {

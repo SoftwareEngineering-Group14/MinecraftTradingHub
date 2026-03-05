@@ -20,7 +20,6 @@ const allowedMethods = "GET, POST, OPTIONS";
 const allowedHeaders = "Content-Type, Authorization";
 
 const VALID_CATEGORIES = ["food", "weapon", "tool", "armor", "potion", "enchantments", "misc"];
-const VALID_SORT_OPTIONS = ["price_asc", "price_desc", "quantity_asc", "quantity_desc", "name_asc", "name_desc"];
 
 export async function OPTIONS(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || "";
@@ -91,18 +90,11 @@ export async function POST(request, { params }) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { storeId, listingName, listingQuantity, listingCategory, minPrice, maxPrice, sort } = body;
+    const { storeId, listingName, listingQuantity, listingCategory, minPrice, maxPrice } = body;
 
     if (listingCategory !== undefined && !VALID_CATEGORIES.includes(listingCategory)) {
       return NextResponse.json(
         { error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(", ")}` },
-        { status: STATUS_BAD_REQUEST, headers }
-      );
-    }
-
-    if (sort !== undefined && !VALID_SORT_OPTIONS.includes(sort)) {
-      return NextResponse.json(
-        { error: `Invalid sort option. Must be one of: ${VALID_SORT_OPTIONS.join(", ")}` },
         { status: STATUS_BAD_REQUEST, headers }
       );
     }
@@ -118,11 +110,6 @@ export async function POST(request, { params }) {
     if (listingCategory !== undefined) query = query.eq("category", listingCategory);
     if (minPrice !== undefined) query = query.gte("price", minPrice);
     if (maxPrice !== undefined) query = query.lte("price", maxPrice);
-
-    if (sort !== undefined) {
-      const [column, direction] = sort.split("_");
-      query = query.order(column, { ascending: direction === "asc" });
-    }
 
     query = query.limit(limit);
 
