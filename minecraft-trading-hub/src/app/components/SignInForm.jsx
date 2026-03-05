@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SignInForm() {
   const [email, setEmail] = useState("");
@@ -75,14 +76,15 @@ export default function SignInForm() {
           required
         />
       </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="btn-green"
-      >
-        {loading ? 'AUTHENTICATING...' : 'SIGN IN'}
-      </button>
+      <Link href = "/home">
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-green"
+        >
+          {loading ? 'AUTHENTICATING...' : 'SIGN IN'}
+        </button>
+      </Link>
     </form>
   );
 }
