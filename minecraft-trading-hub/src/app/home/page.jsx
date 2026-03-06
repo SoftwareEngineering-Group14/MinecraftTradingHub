@@ -1,5 +1,5 @@
 "use client";
-import HomeBaseForm from "../../components/HomeBaseForm";
+import HomeBaseForm from "../components/HomeBaseForm";
 
 export default function HomePage() {
   return (

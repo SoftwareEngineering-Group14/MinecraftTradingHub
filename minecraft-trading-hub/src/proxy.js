@@ -3,12 +3,10 @@ import { NextResponse } from 'next/server';
 import { COOKIE_MAX_AGE_30_DAYS, COOKIE_PATH_ROOT } from './app/lib/serverConstants';
 
 /**
- * Middleware that refreshes the Supabase session on every request.
- * This ensures the access token is renewed using the refresh token so
- * the user remains logged in without having to re-authenticate.
- * Cookie options are configured via serverConstants.js.
+ * Middleware that refreshes the Supabase session AND protects private routes.
+ * The 'home' folder is now the primary protected zone for the Minecraft Trading Hub.
  */
-export async function middleware(request) {
+export async function proxy(request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -20,8 +18,6 @@ export async function middleware(request) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        // Write updated cookies to both the outgoing request and response
-        // so downstream route handlers and the browser both receive them.
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value)
         );
@@ -40,9 +36,24 @@ export async function middleware(request) {
     },
   });
 
-  // Calling getUser() triggers a silent token refresh when the access token
-  // is near expiry, using the refresh token stored in the session cookie.
-  await supabase.auth.getUser();
+  // Check for an active session
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  // 1. PROTECTED ZONE: If trying to access /home (Hub, Profile, Dashboard) or /onboarding
+  if (path.startsWith('/home') || path.startsWith('/onboarding')) {
+    if (!user) {
+      // No session found, bounce them to signin
+      return NextResponse.redirect(new URL('/signin', request.url));
+    }
+  }
+
+  // 2. AUTH GATE: If already logged in, don't let them go back to signin/signup
+  if (user && (path === '/signin' || path === '/signup')) {
+    return NextResponse.redirect(new URL('/home', request.url));
+  }
 
   return response;
 }

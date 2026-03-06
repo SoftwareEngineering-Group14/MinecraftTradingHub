@@ -1,4 +1,4 @@
-import { createServerSideClient } from './supabaseClient';
+import { createServerSideClient } from './supabaseServer';
 
 /** Sign up a new user and create profile with default role 'member' */
 export async function signUp(email, password, name) {

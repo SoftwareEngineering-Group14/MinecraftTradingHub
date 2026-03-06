@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { createServerSideClient } from '../../lib/supabaseClient';
+import { createServerSideClient } from '../../lib/supabaseServer';
 
 export default async function OnboardingLayout({ children }) {
   const supabase = await createServerSideClient();
