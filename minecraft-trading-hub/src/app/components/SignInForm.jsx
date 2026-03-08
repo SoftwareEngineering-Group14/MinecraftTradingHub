@@ -10,7 +10,7 @@ export default function SignInForm() {
   const router = useRouter();
 
   const handleSignIn = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); 
     setError("");
     setLoading(true);
 
@@ -32,7 +32,7 @@ export default function SignInForm() {
       const hasCompletedOnboarding = data.profile?.username || data.session?.user?.user_metadata?.username;
 
       if (hasCompletedOnboarding) {
-        router.push('/dashboard');
+        router.push('/home/dashboard');
       } else {
         router.push('/onboarding/username');
       }
@@ -51,11 +51,7 @@ export default function SignInForm() {
         <p className="font-space-mono text-gray-500 text-xs mt-2">Enter the Trading Hub</p>
       </div>
 
-      {error && (
-        <p className="error-message">
-          {error}
-        </p>
-      )}
+      {error && <p className="error-message">{error}</p>}
 
       <div className="flex flex-col gap-4">
         <input
