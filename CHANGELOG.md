@@ -8,6 +8,13 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
+# [Version: 1.0.8]
+# [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/43]
+- Reorganized the app directory into a clean, modular hierarchy for better scalability and Turbopack compatibility.
+- Implemented separate supabaseServer and supabaseClient utilities to prevent environment-specific crashes during build and runtime.
+- Added initial routing logic to handle protected vs. public pages efficiently.
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.7]
 # [PR: 38] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/38]
 - Implemented CI Rules for running/checking jest tests
