@@ -2,7 +2,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "Minecraft Trading Hub",
-  description: "Your one-stop destination for all Minecraft server trading needs!",
+  description: "Your one-stop destination for all Minecraft trading needs!",
 };
 
 export default function RootLayout({ children }) {
