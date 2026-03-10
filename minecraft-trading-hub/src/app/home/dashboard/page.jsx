@@ -16,17 +16,23 @@ export default function DashboardPage() {
         <div className="auth-divider" />
 
         <div className="flex flex-wrap justify-center gap-4 w-full max-w-md">
-          <Link href="/signup" className="btn-green flex-1 text-center">
+          <Link href="/signup" 
+          color="#8fca5c" 
+          className="btn-green flex-1 text-center">
             Sign Up
           </Link>
 
-          <Link href="/signin" className="btn-green flex-1 text-center">
+          <Link href="/signin" 
+          color="#8fca5c" 
+          className="btn-green flex-1 text-center">
             Sign In
           </Link>
           
           {/* Using a secondary style for the dashboard link if needed */}
-          <Link href="/dashboard" className="btn-green flex-1 text-center opacity-80">
-            Refresh
+          <Link href="/dashboard" 
+          color="#8fca5c" 
+          className="btn-green flex-1 text-center opacity-80">
+            Dashboard
           </Link>
         </div>
       </div>

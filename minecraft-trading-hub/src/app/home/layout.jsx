@@ -21,7 +21,7 @@ export default async function HomeLayout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Shared Navigation Header */}
-      <header className="bg-gray-800 text-white p-4 flex justify-between items-center border-b border-gray-700">
+      <header className="header">
         <div className="flex gap-4">
           <Link href="/home" className="hover:text-blue-400 font-bold transition-colors">HUB</Link>
           <Link href="/home/profile" className="hover:text-blue-400 transition-colors">PROFILE</Link>
@@ -38,7 +38,7 @@ export default async function HomeLayout({ children }) {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6">
+      <main className="page-container">
         {children}
       </main>
     </div>

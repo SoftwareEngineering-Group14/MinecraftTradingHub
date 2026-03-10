@@ -43,9 +43,9 @@ export default function SignUpForm() {
   };
 
   return (
-    <form onSubmit={handleSignUp} className="flex flex-col gap-6 w-full max-w-sm">
+    <form onSubmit={handleSignUp} className="card">
       <div className="text-center">
-        <h2 className="heading-pixel">Register</h2>
+        <h1 className="heading-pixel">Not Registered?</h1>
         <p className="font-space-mono text-gray-500 text-xs mt-2">Create your player profile</p>
       </div>
 
