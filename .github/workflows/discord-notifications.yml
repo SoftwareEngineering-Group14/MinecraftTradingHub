@@ -1,7 +1,5 @@
 name: Discord Notifications
 on:
-  push:
-    branches: ["*"]
   pull_request:
     types: [opened, closed, reopened, synchronize]
   pull_request_review:
@@ -17,6 +15,6 @@ jobs:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           message: |
-            🚀 **${{ github.actor }}** is active on **${{ github.ref_name }}**
-            ${{ github.event.pull_request.title && format('📌 **PR #{0}:** {1}', github.event.pull_request.number, github.event.pull_request.title) || '💻 (Regular Push - No PR yet)' }}
-            ${{ github.event.pull_request.html_url && format('🔗 **Link:** {0}', github.event.pull_request.html_url) || format('📂 **Repo:** https://github.com/{0}', github.repository) }}
+            🆕 **${{ github.actor }}** ${{ github.event.action }} PR #${{ github.event.pull_request.number }}
+            **Title:** ${{ github.event.pull_request.title }}
+            **Link:** ${{ github.event.pull_request.html_url }}
