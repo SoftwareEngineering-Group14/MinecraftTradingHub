@@ -7,7 +7,13 @@ export async function signUp(email, password, name) {
   // 1. Create user in Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
-    password
+    password,
+    options: {
+      data: {
+        full_name: name,
+        role: 'member'
+      }
+    }
   });
 
   if (authError) return { error: authError };
