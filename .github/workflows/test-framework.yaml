@@ -12,6 +12,9 @@ env:
 jobs:
     test-framework:
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./minecraft-trading-hub
         steps:
             - name: Checkout code
               uses: actions/checkout@v2
