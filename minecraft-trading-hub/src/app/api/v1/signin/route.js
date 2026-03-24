@@ -87,7 +87,7 @@ export async function POST(request) {
 
     return NextResponse.json(
       { session },
-      { status: STATUS_INTERNAL_SERVER_ERROR, headers: corsHeaders(origin) }
+      { status: STATUS_OK, headers: corsHeaders(origin) }
     );
   } catch (error) {
     return NextResponse.json(
