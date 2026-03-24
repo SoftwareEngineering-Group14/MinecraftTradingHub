@@ -4,7 +4,7 @@ import { COOKIE_MAX_AGE_30_DAYS, COOKIE_PATH_ROOT } from './app/lib/serverConsta
 
 /**
  * Middleware that refreshes the Supabase session AND protects private routes.
- * The 'home' folder is now the primary protected zone for the Minecraft Trading Hub.
+ * Handles the "Bouncer" logic for Onboarding and Protected Zones.
  */
 export async function proxy(request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,17 +42,20 @@ export async function proxy(request) {
   const url = new URL(request.url);
   const path = url.pathname;
 
-  // 1. PROTECTED ZONE: If trying to access /home (Hub, Profile, Dashboard) or /onboarding
+  // 1. PROTECTION: If no user, kick them to /signin for any protected routes
   if (path.startsWith('/home') || path.startsWith('/onboarding')) {
     if (!user) {
-      // No session found, bounce them to signin
       return NextResponse.redirect(new URL('/signin', request.url));
     }
   }
 
-  // 2. AUTH GATE: If already logged in, don't let them go back to signin/signup
+  if (user && path.startsWith('/home') && !user.user_metadata?.username) {
+    return NextResponse.redirect(new URL('/onboarding/username', request.url));
+  }
+
   if (user && (path === '/signin' || path === '/signup')) {
-    return NextResponse.redirect(new URL('/home', request.url));
+    const destination = user.user_metadata?.username ? '/home/dashboard' : '/onboarding/username';
+    return NextResponse.redirect(new URL(destination, request.url));
   }
 
   return response;
@@ -60,7 +63,6 @@ export async function proxy(request) {
 
 export const config = {
   matcher: [
-    // Run on all routes except Next.js internals and static assets.
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
