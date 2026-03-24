@@ -39,7 +39,7 @@ export async function signIn(email, password) {
 
 /** Sign out current user */
 export async function signOut() {
-  const supabase = await createServerSideClient();
+  const supabase = createServerSideClient();
   const { error } = await supabase.auth.signOut();
   return { error };
 }
