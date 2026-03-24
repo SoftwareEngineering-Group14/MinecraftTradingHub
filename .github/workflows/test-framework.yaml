@@ -30,7 +30,10 @@ jobs:
 
             - name: Run tests and collect coverage
               id: test
-              run: npm test -- --coverage 2>&1 | tee coverage-output.txt
+              shell: bash
+              run: |
+                  set -o pipefail
+                  npm test -- --coverage 2>&1 | tee coverage-output.txt
 
             - name: Notify Discord (success)
               if: success()
