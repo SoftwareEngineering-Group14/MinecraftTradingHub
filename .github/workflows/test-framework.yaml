@@ -36,7 +36,7 @@ jobs:
                   npm test -- --coverage 2>&1 | tee coverage-output.txt
 
             - name: Notify Discord (success)
-              if: success()
+              if: success() && github.ref == 'refs/heads/main'
               run: |
                   COVERAGE_LINE=$(grep "All files" coverage-output.txt)
                   STMTS=$(echo "$COVERAGE_LINE" | awk -F'|' '{print $2}' | tr -d ' ')
@@ -58,7 +58,7 @@ jobs:
                     --data-binary @-
 
             - name: Notify Discord (failure)
-              if: failure()
+              if: failure() && github.ref == 'refs/heads/main'
               run: |
                   FAILED_STEP="${{ steps.install.conclusion == 'failure' && 'Install dependencies' || 'Run tests and collect coverage' }}"
 
