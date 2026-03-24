@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css?family=Space+Mono:400,700&display=swap');
 @import "tailwindcss";
 
-/* --- 1. DEFINE UTILITIES FIRST --- */
+/* --- 1. DEFINE UTILITIES FIRST! --- */
 /* These must be defined before they are used in @apply */
 @utility font-press-start {
   font-family: 'Press Start 2P', cursive;
