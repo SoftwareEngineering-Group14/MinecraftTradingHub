@@ -16,7 +16,7 @@ const mockSupabase = {
   from: jest.fn(),
 };
 
-jest.mock('@/app/lib/supabaseClient', () => ({
+jest.mock('@/app/lib/supabaseServer', () => ({
   createServerSideClient: jest.fn(() => Promise.resolve(mockSupabase)),
 }));
 
