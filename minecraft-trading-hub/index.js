@@ -41,8 +41,7 @@ client.on("messageCreate", async (message) => {
         }
       );
 
-      await message.react("🚀");
-      message.reply(`✅ **Posted to GitHub!** View it here: https://github.com/${process.env.OWNER}/${process.env.REPO}/pull/${prNumber}`);
+      message.reply(`✅ **${message.author.username}** commented on PR #${prNumber}`);
 
     } catch (err) {
       console.error("GitHub API Error:", err.response?.data || err.message);
