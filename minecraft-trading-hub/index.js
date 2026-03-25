@@ -27,7 +27,6 @@ client.on("messageCreate", async (message) => {
     }
 
     try {
-      // Logic: Attributing the message to the Discord sender
       const formattedComment = `💬 **Discord Comment from @${message.author.username}:**\n\n> ${commentBody}`;
 
       await axios.post(
