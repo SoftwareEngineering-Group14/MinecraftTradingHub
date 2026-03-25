@@ -8,6 +8,12 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
+# [Version: 1.1.0]
+# [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/46]
+- Added Discord Bot webhook creation and workflow actions to send incoming messages related to github PR's
+- Implemented Bot feature to comment directly from discord onto Github PR's
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.9]
 # [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/45]
 - Updated API route from supabaseclient to server side for both username and interests (onboarding)
