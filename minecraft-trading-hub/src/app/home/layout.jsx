@@ -11,21 +11,15 @@ export default async function HomeLayout({ children }) {
     redirect('/signin');
   }
 
-  const username = user.user_metadata?.username || 'Player';
+  // Pull username + role from the profiles table (source of truth)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, role')
+    .eq('id', user.id)
+    .maybeSingle();
 
-  // ─── Admin check ───────────────────────────────────────────────────────────
-  // TODO: Replace this placeholder with the real DB query once the admins
-  // table is ready. Example:
-  //
-  //   const { data: adminRow } = await supabase
-  //     .from('admins')           // or 'roles', 'user_roles', etc.
-  //     .select('id')
-  //     .eq('user_id', user.id)
-  //     .maybeSingle();
-  //   const isAdmin = !!adminRow;
-  //
-  const isAdmin = false; // ← wire up above query here
-  // ──────────────────────────────────────────────────────────────────────────
+  const username = profile?.username || user.user_metadata?.username || 'Player';
+  const isAdmin  = profile?.role === 'admin';
 
   return (
     <ViewModeProvider isAdmin={isAdmin}>
