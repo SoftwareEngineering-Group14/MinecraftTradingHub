@@ -19,14 +19,12 @@ export default async function HomeLayout({ children }) {
     .maybeSingle();
 
   const username = profile?.username || user.user_metadata?.username || 'Player';
-
-  // 🚨🚨🚨 NOT IMPLEMENTED YET - but we can use this flag to conditionally show/hide developer features in the UI
   const isDeveloper = profile?.is_developer ?? user.user_metadata?.is_developer ?? false;
 
   return (
-    <ViewModeProvider isAdmin={isAdmin}>
+    <ViewModeProvider isAdmin={isDeveloper}>
       <div className="mc-app-layout">
-        <Sidebar username={username} isAdmin={isAdmin} />
+        <Sidebar username={username} isAdmin={isDeveloper} />
         <main className="mc-main-content">
           {children}
         </main>
