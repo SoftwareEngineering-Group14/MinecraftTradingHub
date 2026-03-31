@@ -45,8 +45,8 @@ export default function SignUpForm() {
   return (
     <form onSubmit={handleSignUp} className="card">
       <div className="text-center">
-        <h1 className="heading-pixel">Not Registered?</h1>
-        <p className="font-space-mono text-gray-500 text-xs mt-2">Create your player profile</p>
+        <h1 className="heading-pixel">New Here?</h1>
+        <p className="font-space-mono text-white text-xs mt-2">Start Trading Now</p>
       </div>
 
       {error && (
@@ -85,7 +85,7 @@ export default function SignUpForm() {
       <button 
         type="submit" 
         disabled={loading}
-        className="btn-green"
+        className="green-button"
       >
         {loading ? 'CREATING...' : 'CREATE PROFILE'}
       </button>

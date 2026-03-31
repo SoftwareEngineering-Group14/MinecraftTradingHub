@@ -31,7 +31,7 @@
   }
 
   .heading-pixel {
-    @apply text-xl md:text-2xl text-green-800 uppercase leading-normal;
+    @apply text-xl md:text-2xl text-[#8fca5c] uppercase leading-normal;
     @apply font-press-start;
   }
 
