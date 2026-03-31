@@ -11,15 +11,17 @@ export default async function HomeLayout({ children }) {
     redirect('/signin');
   }
 
-  // Pull username + role from the profiles table (source of truth)
+  // Pull username, role, and developer flag from the profiles table (source of truth)
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username, role')
+    .select('username, is_developer')
     .eq('id', user.id)
     .maybeSingle();
 
   const username = profile?.username || user.user_metadata?.username || 'Player';
-  const isAdmin  = profile?.role === 'admin';
+
+  // 🚨🚨🚨 NOT IMPLEMENTED YET - but we can use this flag to conditionally show/hide developer features in the UI
+  const isDeveloper = profile?.is_developer ?? user.user_metadata?.is_developer ?? false;
 
   return (
     <ViewModeProvider isAdmin={isAdmin}>
