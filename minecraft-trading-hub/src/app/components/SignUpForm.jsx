@@ -35,7 +35,7 @@ export default function SignUpForm() {
       }
 
       router.push('/onboarding/username');
-      
+
     } catch (err) {
       setError("An error occurred. Please try again.");
       setLoading(false);
@@ -43,25 +43,21 @@ export default function SignUpForm() {
   };
 
   return (
-    <form onSubmit={handleSignUp} className="flex flex-col gap-6 w-full max-w-sm">
+    <form onSubmit={handleSignUp} className="flex flex-col gap-5 w-full">
       <div className="text-center">
-        <h2 className="heading-pixel">Register</h2>
-        <p className="font-space-mono text-gray-500 text-xs mt-2">Create your player profile</p>
+        <h2 className="font-press-start text-sm text-white leading-loose mb-1">REGISTER</h2>
+        <p className="font-space-mono text-[10px] text-zinc-500">Create your player profile</p>
       </div>
 
-      {error && (
-        <p className="error-message">
-          {error}
-        </p>
-      )}
+      {error && <p className="error-message-dark">{error}</p>}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <input
           type="text"
           placeholder="Full Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="auth-input"
+          className="mc-auth-input-dark"
           required
         />
         <input
@@ -69,7 +65,7 @@ export default function SignUpForm() {
           placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="auth-input"
+          className="mc-auth-input-dark"
           required
         />
         <input
@@ -77,16 +73,12 @@ export default function SignUpForm() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="auth-input"
+          className="mc-auth-input-dark"
           required
         />
       </div>
 
-      <button 
-        type="submit" 
-        disabled={loading}
-        className="btn-green"
-      >
+      <button type="submit" disabled={loading} className="btn-green">
         {loading ? 'CREATING...' : 'CREATE PROFILE'}
       </button>
     </form>

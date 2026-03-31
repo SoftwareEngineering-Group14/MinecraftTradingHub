@@ -77,3 +77,483 @@
     @apply flex flex-col justify-center items-center min-h-screen gap-8 bg-gray-50 p-6;
   }
 }
+
+/* ===== MINECRAFT HUB THEME ===== */
+
+/* Main app wrapper */
+.mc-app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #1a1a1a;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── Sidebar ── */
+.mc-sidebar {
+  width: 256px;
+  flex-shrink: 0;
+  background-color: #202020;
+  border-right: 4px solid #000000;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.mc-sidebar-logo {
+  padding: 16px;
+  border-bottom: 4px solid #000000;
+  background: linear-gradient(180deg, #162a16 0%, #202020 100%);
+}
+
+.mc-sidebar-profile {
+  padding: 14px 16px;
+  border-bottom: 4px solid #000000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #252525;
+}
+
+/* Pixel-block avatar — small (sidebar) */
+.mc-avatar-sm {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 3px solid #000000;
+  image-rendering: pixelated;
+  box-shadow: 3px 3px 0 #000000,
+              inset -3px -3px 0 rgba(0, 0, 0, 0.35),
+              inset 3px 3px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* Pixel-block avatar — large (profile page) */
+.mc-avatar-lg {
+  width: 96px;
+  height: 96px;
+  border: 4px solid #000000;
+  image-rendering: pixelated;
+  box-shadow: 6px 6px 0 #000000,
+              inset -4px -4px 0 rgba(0, 0, 0, 0.35),
+              inset 4px 4px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* Search bar wrapper */
+.mc-search-bar {
+  padding: 12px 16px;
+  border-bottom: 4px solid #000000;
+}
+
+/* Search input */
+.mc-search-input {
+  width: 100%;
+  padding: 8px 10px;
+  background-color: #111111;
+  border: 2px solid #3a3a3a;
+  color: #cccccc;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  outline: none;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+.mc-search-input:focus {
+  border-color: #5D8A2C;
+}
+.mc-search-input::placeholder {
+  color: #505050;
+}
+
+/* Nav section */
+.mc-nav-section {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mc-nav-link {
+  display: block;
+  padding: 8px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: #999999;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 2px solid transparent;
+  letter-spacing: 0.05em;
+}
+.mc-nav-link:hover {
+  color: #ffffff;
+  background-color: #303030;
+  border-color: #555555;
+  box-shadow: 2px 2px 0 #000000;
+}
+
+/* Logout button */
+.mc-logout-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #7f1d1d;
+  color: #ffffff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  text-transform: uppercase;
+  border: 3px solid #000000;
+  box-shadow: 0 3px 0 #000000;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+.mc-logout-btn:hover {
+  background-color: #991b1b;
+}
+.mc-logout-btn:active {
+  box-shadow: none;
+  transform: translateY(3px);
+}
+
+/* ── Main content ── */
+.mc-main-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #1a1a1a;
+  padding: 28px;
+}
+
+/* Dashboard header */
+.mc-dashboard-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 4px solid #000000;
+}
+
+/* Listings grid */
+.mc-listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+/* Listing card */
+.mc-listing-card {
+  background-color: #272727;
+  border: 3px solid #000000;
+  box-shadow: 4px 4px 0 #000000;
+  cursor: pointer;
+}
+.mc-listing-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #000000;
+}
+
+/* Card image/icon area */
+.mc-card-image {
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* pixel-grid overlay */
+.mc-card-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg,   transparent, transparent 7px, rgba(0,0,0,0.12) 7px, rgba(0,0,0,0.12) 8px),
+    repeating-linear-gradient(90deg,  transparent, transparent 7px, rgba(0,0,0,0.12) 7px, rgba(0,0,0,0.12) 8px);
+  pointer-events: none;
+}
+
+/* Card info section */
+.mc-card-info {
+  padding: 12px;
+  border-top: 3px solid #000000;
+}
+
+/* Store type badge */
+.mc-type-badge {
+  display: inline-block;
+  padding: 3px 6px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 6px;
+  text-transform: uppercase;
+  border: 2px solid;
+  margin-top: 8px;
+}
+
+/* ── Profile page ── */
+.mc-profile-container {
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+.mc-profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 24px;
+  background-color: #222222;
+  border: 3px solid #000000;
+  box-shadow: 6px 6px 0 #000000;
+  margin-bottom: 24px;
+}
+
+/* Pixel-stripe divider (grass row) */
+.mc-pixel-divider {
+  height: 6px;
+  background: repeating-linear-gradient(90deg,
+    #5D8A2C 0px, #5D8A2C 8px,
+    #3a5a1a 8px, #3a5a1a 16px
+  );
+  border-top: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  width: 100%;
+}
+
+.mc-owned-section-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 9px;
+  color: #5D8A2C;
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom: 3px solid #5D8A2C;
+  margin-bottom: 12px;
+}
+
+.mc-owned-store-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background-color: #272727;
+  border: 2px solid #333333;
+  border-bottom-color: #000000;
+  box-shadow: 0 2px 0 #000000;
+  margin-bottom: 8px;
+}
+
+/* ── Active nav link ── */
+.mc-nav-link-active {
+  color: #ffffff !important;
+  background-color: #323232;
+  border-left: 3px solid #5D8A2C !important;
+  border-right: 2px solid transparent !important;
+  border-top: 2px solid transparent !important;
+  border-bottom: 2px solid transparent !important;
+}
+.mc-nav-link-active:hover {
+  background-color: #3a3a3a;
+  box-shadow: none;
+}
+
+/* ── Admin toggle button ── */
+.mc-admin-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background-color: #1a1200;
+  border: 2px solid #664c00;
+  box-shadow: 2px 2px 0 #000000;
+  cursor: pointer;
+}
+.mc-admin-toggle:hover {
+  border-color: #FFD700;
+  background-color: #221800;
+}
+
+/* ── Admin view indicator bar ── */
+.mc-admin-bar {
+  background: repeating-linear-gradient(
+    90deg,
+    #7a4f00 0px, #7a4f00 8px,
+    #5a3a00 8px, #5a3a00 16px
+  );
+  border-top: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Dropdown ── */
+.mc-dropdown {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  background-color: #1a1a1a;
+  border: 2px solid #444444;
+  box-shadow: 4px 4px 0 #000000;
+  z-index: 50;
+}
+.mc-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.mc-dropdown-item:hover {
+  background-color: #333333;
+  color: #ffffff;
+}
+.mc-dropdown-item-active {
+  background-color: #162a16;
+  color: #5D8A2C;
+}
+
+/* ── Admin delete button on cards ── */
+.mc-admin-delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  background-color: #7f1d1d;
+  color: #ffffff;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: bold;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+.mc-admin-delete-btn:hover {
+  background-color: #991b1b;
+}
+.mc-admin-delete-btn:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+/* ── Card timestamp footer ── */
+.mc-card-timestamps {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px solid #333333;
+}
+
+/* ── Clickable creator / server text ── */
+.mc-clickable-tag {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: #999999;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.mc-clickable-tag:hover {
+  color: #dddddd;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ══════════════════════════════════════
+   DARK AUTH PAGES (Sign In / Sign Up)
+══════════════════════════════════════ */
+
+.mc-auth-page {
+  min-height: 100vh;
+  background-color: #111111;
+  background-image:
+    repeating-linear-gradient(0deg,   transparent, transparent 31px, rgba(255,255,255,0.025) 31px, rgba(255,255,255,0.025) 32px),
+    repeating-linear-gradient(90deg,  transparent, transparent 31px, rgba(255,255,255,0.025) 31px, rgba(255,255,255,0.025) 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.mc-auth-panel {
+  width: 100%;
+  max-width: 420px;
+  background-color: #1e1e1e;
+  border: 4px solid #000000;
+  box-shadow: 6px 6px 0 #000000;
+  overflow: hidden;
+}
+
+/* Grass-stripe top accent */
+.mc-auth-panel-accent {
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    #5D8A2C 0px, #5D8A2C 8px,
+    #3a5a1a 8px, #3a5a1a 16px
+  );
+  border-bottom: 3px solid #000000;
+}
+
+.mc-auth-panel-body {
+  padding: 32px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Dark minecraft-style input */
+.mc-auth-input-dark {
+  width: 100%;
+  padding: 14px 14px;
+  background-color: #111111;
+  border: 3px solid #333333;
+  color: #ffffff;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  outline: none;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+.mc-auth-input-dark:focus {
+  border-color: #5D8A2C;
+}
+.mc-auth-input-dark::placeholder {
+  color: #505050;
+}
+
+/* Dark error message */
+.error-message-dark {
+  color: #f87171;
+  font-size: 11px;
+  text-align: center;
+  padding: 8px 12px;
+  background-color: #2d0a0a;
+  border: 2px solid #7f1d1d;
+  font-family: 'Space Mono', monospace;
+}
+
+/* Panel-scoped button override — blockier, no radius */
+.mc-auth-panel-body .btn-green {
+  border-radius: 0;
+  box-shadow: 0 4px 0 #14532d, 2px 4px 0 #000000;
+  transition: none;
+}
+.mc-auth-panel-body .btn-green:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* Auth panel divider */
+.mc-auth-divider-dark {
+  height: 3px;
+  background: #2a2a2a;
+  border-top: 1px solid #111111;
+  border-bottom: 1px solid #444444;
+}

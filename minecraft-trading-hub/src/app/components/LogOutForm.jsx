@@ -16,11 +16,11 @@ export default function LogoutButton() {
   };
 
   return (
-    <button 
+    <button
       onClick={handleLogout}
-      className="text-xs bg-red-600 px-3 py-1 rounded font-bold hover:bg-red-700 transition-colors uppercase"
+      className="mc-logout-btn"
     >
-      Logout
+      ⬛ Logout
     </button>
   );
 }

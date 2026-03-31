@@ -10,7 +10,7 @@ export default function SignInForm() {
   const router = useRouter();
 
   const handleSignIn = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     setError("");
     setLoading(true);
 
@@ -45,21 +45,21 @@ export default function SignInForm() {
   };
 
   return (
-    <form onSubmit={handleSignIn} className="flex flex-col gap-6 w-full max-w-sm">
+    <form onSubmit={handleSignIn} className="flex flex-col gap-5 w-full">
       <div className="text-center">
-        <h2 className="heading-pixel">Login</h2>
-        <p className="font-space-mono text-gray-500 text-xs mt-2">Enter the Trading Hub</p>
+        <h2 className="font-press-start text-sm text-white leading-loose mb-1">LOGIN</h2>
+        <p className="font-space-mono text-[10px] text-zinc-500">Enter the Trading Hub</p>
       </div>
 
-      {error && <p className="error-message">{error}</p>}
+      {error && <p className="error-message-dark">{error}</p>}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <input
           type="email"
           placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="auth-input"
+          className="mc-auth-input-dark"
           required
         />
         <input
@@ -67,16 +67,12 @@ export default function SignInForm() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="auth-input"
+          className="mc-auth-input-dark"
           required
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="btn-green"
-      >
+      <button type="submit" disabled={loading} className="btn-green">
         {loading ? 'AUTHENTICATING...' : 'SIGN IN'}
       </button>
     </form>

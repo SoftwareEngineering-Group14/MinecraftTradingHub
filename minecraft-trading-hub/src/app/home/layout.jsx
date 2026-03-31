@@ -1,46 +1,40 @@
 import { createServerSideClient } from '../lib/supabaseServer';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
-// AUTH LEAD: Corrected the typo in your import to match your filename
-import LogOutForm from '../components/LogOutForm';
+import Sidebar from '../components/Sidebar';
+import { ViewModeProvider } from '../contexts/ViewModeContext';
 
 export default async function HomeLayout({ children }) {
-  // 1. Use your new utility (handles the Next.js 16 async cookie requirement)
   const supabase = await createServerSideClient();
-
-  // 2. Server-side session check
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 3. Infrastructure Guard: Redirect if session is missing
   if (!user) {
     redirect('/signin');
   }
 
-  const username = user.user_metadata?.username || "Player";
+  const username = user.user_metadata?.username || 'Player';
+
+  // ─── Admin check ───────────────────────────────────────────────────────────
+  // TODO: Replace this placeholder with the real DB query once the admins
+  // table is ready. Example:
+  //
+  //   const { data: adminRow } = await supabase
+  //     .from('admins')           // or 'roles', 'user_roles', etc.
+  //     .select('id')
+  //     .eq('user_id', user.id)
+  //     .maybeSingle();
+  //   const isAdmin = !!adminRow;
+  //
+  const isAdmin = false; // ← wire up above query here
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Shared Navigation Header */}
-      <header className="bg-gray-800 text-white p-4 flex justify-between items-center border-b border-gray-700">
-        <div className="flex gap-4">
-          <Link href="/home" className="hover:text-blue-400 font-bold transition-colors">HUB</Link>
-          <Link href="/home/profile" className="hover:text-blue-400 transition-colors">PROFILE</Link>
-          <Link href="/home/dashboard" className="hover:text-blue-400 transition-colors">DASHBOARD</Link>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-space-mono text-green-400">
-            {username.toUpperCase()}
-          </span>
-          {/* AUTH LEAD FIX: Replaced the static Link with your functional Client Component */}
-          <LogOutForm />
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="flex-1 p-6">
-        {children}
-      </main>
-    </div>
+    <ViewModeProvider isAdmin={isAdmin}>
+      <div className="mc-app-layout">
+        <Sidebar username={username} isAdmin={isAdmin} />
+        <main className="mc-main-content">
+          {children}
+        </main>
+      </div>
+    </ViewModeProvider>
   );
 }
