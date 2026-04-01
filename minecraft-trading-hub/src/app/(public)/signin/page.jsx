@@ -22,7 +22,7 @@ export default function SignInPage() {
 
           <div className="mc-auth-divider-dark" />
 
-          <p className="font-space-mono text-[10px] text-zinc-500 text-center">
+          <p className="font-space-mono text-[10px] text-center" style={{ color: '#C4904A' }}>
             Don&apos;t have an account?{' '}
             <Link
               href="/signup"

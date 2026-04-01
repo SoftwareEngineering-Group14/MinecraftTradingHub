@@ -45,8 +45,8 @@ export default function SignUpForm() {
   return (
     <form onSubmit={handleSignUp} className="flex flex-col gap-5 w-full">
       <div className="text-center">
-        <h2 className="font-press-start text-sm text-white leading-loose mb-1">REGISTER</h2>
-        <p className="font-space-mono text-[10px] text-zinc-500">Create your player profile</p>
+        <h2 className="font-press-start text-sm leading-loose mb-1" style={{ color: '#FFF0D0' }}>REGISTER</h2>
+        <p className="font-space-mono text-[10px]" style={{ color: '#C4904A' }}>Create your player profile</p>
       </div>
 
       {error && <p className="error-message-dark">{error}</p>}

@@ -23,7 +23,7 @@ export default function SignUpPage() {
           <div className="mc-auth-divider-dark" />
 
           <div className="flex flex-col items-center gap-2">
-            <p className="font-space-mono text-[10px] text-zinc-500 text-center">
+            <p className="font-space-mono text-[10px] text-center" style={{ color: '#C4904A' }}>
               Already have an account?{' '}
               <Link
                 href="/signin"
@@ -32,7 +32,7 @@ export default function SignUpPage() {
                 Sign In
               </Link>
             </p>
-            <p className="font-space-mono text-[10px] text-zinc-500 text-center">
+            <p className="font-space-mono text-[10px] text-center" style={{ color: '#C4904A' }}>
               Want to go back?{' '}
               <Link
                 href="/"

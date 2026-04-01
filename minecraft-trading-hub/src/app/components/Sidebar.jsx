@@ -13,6 +13,7 @@ export default function Sidebar({ username, isAdmin }) {
 
   const initial = username ? username.charAt(0).toUpperCase() : '?';
   const onDashboard = pathname === '/home/dashboard' || pathname === '/home';
+  const onServers   = pathname === '/home/servers';
   const onProfile   = pathname === '/home/profile';
 
   return (
@@ -25,7 +26,7 @@ export default function Sidebar({ username, isAdmin }) {
         </h1>
       </div>
 
-      {/* ── Admin view indicator ── */}
+      {/* ── Admin view indicator bar ── */}
       {isAdminView && (
         <div className="mc-admin-bar">
           <span className="font-press-start text-[7px] text-yellow-400">⚡ ADMIN VIEW</span>
@@ -36,20 +37,17 @@ export default function Sidebar({ username, isAdmin }) {
       <div className="mc-sidebar-profile">
         <div
           className="mc-avatar-sm flex items-center justify-center"
-          style={{
-            background: 'linear-gradient(135deg, #92400e 0%, #78350f 50%, #92400e 100%)',
-          }}
+          style={{ background: 'linear-gradient(135deg, #92400e 0%, #78350f 50%, #92400e 100%)' }}
         >
-          <span className="font-press-start text-[11px] text-amber-200 select-none">
-            {initial}
-          </span>
+          <span className="font-press-start text-[11px] text-amber-200 select-none">{initial}</span>
         </div>
 
         <div className="flex flex-col gap-1 overflow-hidden">
           <span className="font-press-start text-[8px] text-green-400 truncate leading-relaxed">
             {username}
           </span>
-          <span className="font-space-mono text-[9px] text-zinc-500">
+          {/* warm cream — clearly readable on dark log sidebar */}
+          <span className="font-space-mono text-[9px]" style={{ color: '#C4904A' }}>
             {isAdmin ? 'Administrator' : 'Hub Resident'}
           </span>
         </div>
@@ -57,7 +55,7 @@ export default function Sidebar({ username, isAdmin }) {
 
       {/* ── Search ── */}
       <div className="mc-search-bar">
-        <p className="font-press-start text-[7px] text-zinc-600 uppercase mb-2">
+        <p className="font-press-start text-[7px] uppercase mb-2" style={{ color: '#C4904A' }}>
           Recent Stores
         </p>
         <input
@@ -77,6 +75,12 @@ export default function Sidebar({ username, isAdmin }) {
           📦 &nbsp;Dashboard
         </Link>
         <Link
+          href="/home/servers"
+          className={`mc-nav-link ${onServers ? 'mc-nav-link-active' : ''}`}
+        >
+          🌐 &nbsp;Servers
+        </Link>
+        <Link
           href="/home/profile"
           className={`mc-nav-link ${onProfile ? 'mc-nav-link-active' : ''}`}
         >
@@ -94,7 +98,7 @@ export default function Sidebar({ username, isAdmin }) {
             <span className="font-press-start text-[7px] text-yellow-400">
               {isAdminView ? '⚡ Admin View' : '👤 User View'}
             </span>
-            <span className="font-press-start text-[7px] text-zinc-500">
+            <span className="font-press-start text-[7px]" style={{ color: '#C4904A' }}>
               {dropdownOpen ? '▲' : '▼'}
             </span>
           </button>

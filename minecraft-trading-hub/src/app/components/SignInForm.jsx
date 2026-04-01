@@ -47,8 +47,8 @@ export default function SignInForm() {
   return (
     <form onSubmit={handleSignIn} className="flex flex-col gap-5 w-full">
       <div className="text-center">
-        <h2 className="font-press-start text-sm text-white leading-loose mb-1">LOGIN</h2>
-        <p className="font-space-mono text-[10px] text-zinc-500">Enter the Trading Hub</p>
+        <h2 className="font-press-start text-sm leading-loose mb-1" style={{ color: '#FFF0D0' }}>LOGIN</h2>
+        <p className="font-space-mono text-[10px]" style={{ color: '#C4904A' }}>Enter the Trading Hub</p>
       </div>
 
       {error && <p className="error-message-dark">{error}</p>}
