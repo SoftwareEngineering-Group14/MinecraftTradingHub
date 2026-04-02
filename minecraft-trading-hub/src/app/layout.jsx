@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./minecraftTextures.css"
 
 export const metadata = {
   title: "Minecraft Trading Hub",

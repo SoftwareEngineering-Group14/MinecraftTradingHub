@@ -5,16 +5,15 @@ export default function HomeBaseForm() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col gap-4 w-80">
-      <h2 className="text-xl font-bold">Hit this button to see your profile!</h2>
-      
-      <button 
-        type="button"
-        onClick={() => router.push('/home/profile')}
-        className="bg-blue-500 text-white p-2 rounded"
-      >
-        View Profile
-      </button>
+    <div className="flex justify-center items-center h-screen">
+      <div className="card-container flex-row">
+        <div className="card flex-1">
+          <h1 className="heading-pixel text-center">servers here</h1>
+        </div>
+        <div className="card flex-1">
+          <h1 className="heading-pixel text-center">server info here</h1>
+        </div>
+      </div>
     </div>
   );
 }

@@ -47,8 +47,7 @@ export default function SignInForm() {
   return (
     <form onSubmit={handleSignIn} className="flex flex-col gap-6 w-full max-w-sm">
       <div className="text-center">
-        <h2 className="heading-pixel">Login</h2>
-        <p className="font-space-mono text-gray-500 text-xs mt-2">Enter the Trading Hub</p>
+        <h2 className="heading-pixel">Login To Trade</h2>
       </div>
 
       {error && <p className="error-message">{error}</p>}
@@ -75,7 +74,7 @@ export default function SignInForm() {
       <button
         type="submit"
         disabled={loading}
-        className="btn-green"
+        className="green-button"
       >
         {loading ? 'AUTHENTICATING...' : 'SIGN IN'}
       </button>

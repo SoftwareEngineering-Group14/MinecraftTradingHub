@@ -7,7 +7,6 @@ import LogOutForm from '../components/LogOutForm';
 export default async function HomeLayout({ children }) {
   // 1. Use your new utility (handles the Next.js 16 async cookie requirement)
   const supabase = await createServerSideClient();
-
   // 2. Server-side session check
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -18,27 +17,43 @@ export default async function HomeLayout({ children }) {
 
   const username = user.user_metadata?.username || "Player";
 
+  // fetch coins from profiles table (default to 0 if missing)
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('coins')
+    .eq('id', user.id)
+    .single();
+
+  const coins = profileData?.coins ?? 0;
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Shared Navigation Header */}
-      <header className="bg-gray-800 text-white p-4 flex justify-between items-center border-b border-gray-700">
+      <header className="header">
         <div className="flex gap-4">
-          <Link href="/home" className="hover:text-blue-400 font-bold transition-colors">HUB</Link>
-          <Link href="/home/profile" className="hover:text-blue-400 transition-colors">PROFILE</Link>
-          <Link href="/home/dashboard" className="hover:text-blue-400 transition-colors">DASHBOARD</Link>
+          <Link href="/home" className="hover:text-[#8fca5c] transition-colors">HUB</Link>
+          <Link href="/home/profile" className="hover:text-[#8fca5c] transition-colors">PROFILE</Link>
+          <Link href="/home/dashboard" className="hover:text-[#8fca5c] transition-colors">DASHBOARD</Link>
+
         </div>
         
         <div className="flex items-center gap-4">
-          <span className="text-sm font-space-mono text-green-400">
-            {username.toUpperCase()}
-          </span>
+          <div className="px-3 py-1 rounded-lg border border-[#8fca5c] bg-[#4e6a1d] text-xs text-white font-space-mono">
+            {coins} 🪙
+          </div>
+          <Link href="/home/profile" className="hover:text-[#8fca5c] transition-colors">
+            <span className="text-sm font-space-mono text-white cursor-pointer hover:text-[#8fca5c]/80 transition-colors">
+              {username.toUpperCase()}
+            </span>
+          </Link>
+
           {/* AUTH LEAD FIX: Replaced the static Link with your functional Client Component */}
           <LogOutForm />
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6">
+      <main className="page-container">
         {children}
       </main>
     </div>
