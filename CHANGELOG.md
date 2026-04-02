@@ -8,6 +8,11 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
+# [Version: 1.0.10]
+# [PR: 52] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/52]
+- Changed user app-wide role from string to bolean "is_developer"
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.9]
 # [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/45]
 - Updated API route from supabaseclient to server side for both username and interests (onboarding)
