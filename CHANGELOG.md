@@ -7,13 +7,14 @@ Copy and paste the following lines and state the changes before merging each com
 # [PR: ] : []
 - Enter Change Details Here!
 
--------------------------------------------------------------------------------
 # [Version: 1.0.9]
 # [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/45]
-- Updated API route from supabaseclient to server side for both username and interests (onboarding)
-- Fixed Incursion Loop Error when username is registered
-- Fixed Page direction after signup to Dashboard Home (Previously gave 404 error due to incorrect name convention)
-- Included home Folder as part of proxy
+
+
+-------------------------------------------------------------------------------
+# [Version: 1.0.9]
+# [PR: 52] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/52]
+- Changed user app-wide role from string to bolean "is_developer"
 
 -------------------------------------------------------------------------------
 # [Version: 1.0.8]
