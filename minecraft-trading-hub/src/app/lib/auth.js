@@ -11,7 +11,7 @@ export async function signUp(email, password, name) {
     options: {
       data: {
         full_name: name,
-        role: 'member'
+        is_developer: false,
       }
     }
   });
@@ -24,7 +24,7 @@ export async function signUp(email, password, name) {
     .insert([{
       id: authData.user.id,
       name,
-      role: 'member',
+      is_developer: false,
       created_at: new Date().toISOString()
     }]);
 

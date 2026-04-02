@@ -8,9 +8,14 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
-# [Version: 1.1.0]
-# [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/47]
+# [Version: 1.0.11]
+# [PR: 49] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/49]
 - Added Discord Bot webhook creation and workflow actions to send incoming messages related to github PR's
+
+-------------------------------------------------------------------------------
+# [Version: 1.0.10]
+# [PR: 52] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/52]
+- Changed user app-wide role from string to bolean "is_developer"
 
 -------------------------------------------------------------------------------
 # [Version: 1.0.9]
