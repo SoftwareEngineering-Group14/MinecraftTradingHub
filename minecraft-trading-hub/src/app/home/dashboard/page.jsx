@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useViewMode } from '../../contexts/ViewModeContext';
+import { createClient } from '../../lib/supabaseClient';
 
 const STORE_TYPES = {
   Redstone:     { bg: '#4a0000', accent: '#ff2222', text: '#ff8888', icon: '⚡' },
@@ -14,28 +16,14 @@ const STORE_TYPES = {
   Creative:     { bg: '#002040', accent: '#3498DB', text: '#70b8ec', icon: '🎨' },
 };
 
-const FILLER_LISTINGS = [
-  { id:  1, name: 'Diamond Emporium',  server: 'SurvivalCraft',  creator: 'Steve_Builder',  type: 'Trading',    created: '3 days ago',  updated: '2h ago'  },
-  { id:  2, name: 'Redstone Depot',    server: 'Redtech SMP',    creator: 'PistonPro99',    type: 'Redstone',   created: '5 days ago',  updated: '1d ago'  },
-  { id:  3, name: 'The Pig Farm',      server: 'FarmLife MC',    creator: 'FarmerJoe42',    type: 'Farming',    created: '1 week ago',  updated: '6h ago'  },
-  { id:  4, name: 'PvP Arsenal',       server: 'BattleMC',       creator: 'SwordMaster_X',  type: 'PvP',        created: '2 days ago',  updated: '30m ago' },
-  { id:  5, name: 'Creative Corner',   server: 'BuildCraft Pro', creator: 'PixelArtist',    type: 'Creative',   created: '4 days ago',  updated: '3h ago'  },
-  { id:  6, name: 'Rare Finds Shop',   server: 'VaultMC',        creator: 'TreasureHuntr',  type: 'Rare Items', created: '10 days ago', updated: '2d ago'  },
-  { id:  7, name: 'Build Supply Co.',  server: 'MegaBuild',      creator: 'ArchitectXL',    type: 'Building',   created: '6 days ago',  updated: '12h ago' },
-  { id:  8, name: 'Hardcore Hut',      server: 'HardCore SMP',   creator: 'SurvivorPro1',   type: 'Hardcore',   created: '2 weeks ago', updated: '4d ago'  },
-  { id:  9, name: 'Farm Fresh',        server: 'HarvestMC',      creator: 'CropKing2024',   type: 'Farming',    created: '1 day ago',   updated: '45m ago' },
-  { id: 10, name: 'Iron Fortress',     server: 'War Games',      creator: 'BlackSmith99',   type: 'PvP',        created: '8 days ago',  updated: '5h ago'  },
-  { id: 11, name: 'Enchant Palace',    server: 'Magic Realm',    creator: 'WizardSteve',    type: 'Rare Items', created: '3 weeks ago', updated: '1d ago'  },
-  { id: 12, name: 'Stone Works',       server: 'StoneCraft',     creator: 'MasonRock',      type: 'Building',   created: '12 days ago', updated: '8h ago'  },
-];
+const DEFAULT_STYLE = STORE_TYPES.Trading;
 
 function ListingCard({ listing, isAdminView }) {
-  const style = STORE_TYPES[listing.type] || STORE_TYPES.Trading;
+  const style = DEFAULT_STYLE;
 
   return (
     <div className="mc-listing-card" style={{ position: 'relative' }}>
 
-      {/* Admin delete — sits above the link, top-right corner */}
       {isAdminView && (
         <button
           className="mc-admin-delete-btn"
@@ -47,62 +35,39 @@ function ListingCard({ listing, isAdminView }) {
         </button>
       )}
 
-      {/* Entire card is a link to the store page */}
       <Link href={`/home/store/${listing.id}`} className="block" style={{ textDecoration: 'none', color: 'inherit' }}>
 
-        {/* ── Store image / icon block ── */}
         <div className="mc-card-image" style={{ backgroundColor: style.bg }}>
           <span style={{ fontSize: '44px', position: 'relative', zIndex: 1 }}>
             {style.icon}
           </span>
         </div>
 
-        {/* ── Info ── */}
         <div className="mc-card-info">
-          {/* Store name — cream white, high contrast */}
           <p className="font-press-start text-[9px] leading-relaxed mb-3" style={{ color: '#FFF0D0' }}>
-            {listing.name}
+            {listing.name || listing.description || 'Unnamed Store'}
           </p>
 
-          {/* Server — clickable, warm cream */}
           <div className="mb-1 flex items-center gap-1">
             <span className="font-space-mono text-[9px]" style={{ color: '#E8C888' }}>🌐</span>
-            <button
-              className="mc-clickable-tag"
-              onClick={(e) => e.preventDefault()}
-            >
-              {listing.server}
+            <button className="mc-clickable-tag" onClick={(e) => e.preventDefault()}>
+              {listing.server_name || 'Unknown Server'}
             </button>
           </div>
 
-          {/* Creator — clickable, warm cream */}
           <div className="mb-3 flex items-center gap-1">
             <span className="font-space-mono text-[9px]" style={{ color: '#E8C888' }}>👤</span>
-            <button
-              className="mc-clickable-tag"
-              onClick={(e) => e.preventDefault()}
-            >
-              {listing.creator}
+            <button className="mc-clickable-tag" onClick={(e) => e.preventDefault()}>
+              {listing.profiles?.username || 'Unknown'}
             </button>
           </div>
 
-          {/* Type badge */}
           <span
             className="mc-type-badge"
             style={{ backgroundColor: style.bg, color: style.text, borderColor: style.accent }}
           >
-            {listing.type}
+            {listing.status || 'active'}
           </span>
-
-          {/* Timestamps — muted tan, clearly readable */}
-          <div className="mc-card-timestamps">
-            <p className="font-space-mono text-[8px]" style={{ color: '#E8C888' }}>
-              📅 {listing.created}
-            </p>
-            <p className="font-space-mono text-[8px] mt-1" style={{ color: '#E8C888' }}>
-              🔄 {listing.updated}
-            </p>
-          </div>
         </div>
 
       </Link>
@@ -110,20 +75,71 @@ function ListingCard({ listing, isAdminView }) {
   );
 }
 
+function EmptyState() {
+  return (
+    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '80px 20px' }}>
+      <span style={{ fontSize: '64px', opacity: 0.35 }}>🏪</span>
+      <p className="font-press-start text-[9px] text-green-400 mt-4" style={{ opacity: 0.6 }}>
+        No Stores Found
+      </p>
+      <p className="font-space-mono text-[9px] mt-2" style={{ color: '#8A6030' }}>
+        Join a server to see its active stores here
+      </p>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { isAdminView } = useViewMode();
+  const [stores, setStores] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStores() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get all servers the user is a member of
+        const { data: memberships } = await supabase
+          .from('server_permissions')
+          .select('server_id')
+          .eq('user_id', user.id)
+          .eq('is_member', true);
+
+        if (!memberships?.length) return;
+
+        const serverIds = memberships.map((m) => m.server_id);
+
+        // Fetch active stores from all those servers, joining owner username
+        const { data: storeData } = await supabase
+          .from('user_stores')
+          .select('id, name, description, server_name, status, profiles!owner_id(username)')
+          .in('server_id', serverIds)
+          .eq('status', 'active')
+          .limit(24);
+
+        setStores(storeData || []);
+      } catch (err) {
+        console.error('Failed to load stores:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStores();
+  }, []);
 
   return (
     <div>
-      {/* ── Header ── */}
       <div className="mc-dashboard-header">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-press-start text-sm text-green-400 mb-2">
-              ⛏ Recent Listings
+              ⛏ Active Stores
             </h1>
             <p className="font-space-mono text-[10px] uppercase tracking-widest" style={{ color: '#C4904A' }}>
-              Browse the latest stores from across all servers
+              {loading ? 'Loading...' : `${stores.length} stores across your servers`}
             </p>
           </div>
 
@@ -138,11 +154,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Grid ── */}
       <div className="mc-listings-grid">
-        {FILLER_LISTINGS.map((listing) => (
-          <ListingCard key={listing.id} listing={listing} isAdminView={isAdminView} />
-        ))}
+        {loading ? null : stores.length === 0 ? (
+          <EmptyState />
+        ) : (
+          stores.map((store) => (
+            <ListingCard key={store.id} listing={store} isAdminView={isAdminView} />
+          ))
+        )}
       </div>
     </div>
   );

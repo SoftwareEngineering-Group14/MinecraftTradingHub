@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSideClient } from '../../../lib/supabaseServer';
+import { createClient as createServerSideClient } from '../../../lib/supabaseServer';
 import { isOriginAllowed, corsHeaders } from '../../../lib/serverFunctions';
 import {
   HEADER_ORIGIN,

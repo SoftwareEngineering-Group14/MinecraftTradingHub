@@ -1,190 +1,70 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { createClient } from '../../lib/supabaseClient';
 
-/* ── Server type styles ── */
-const SERVER_TYPES = {
-  Survival:  { bg: '#0f2d00', accent: '#5D8A2C', text: '#8BC34A', icon: '🌲' },
-  SMP:       { bg: '#3c2010', accent: '#c4a14a', text: '#e8cc88', icon: '🏘️' },
-  Creative:  { bg: '#002040', accent: '#3498DB', text: '#70b8ec', icon: '🎨' },
-  Hardcore:  { bg: '#0a0a0a', accent: '#888888', text: '#cccccc', icon: '💀' },
-  Factions:  { bg: '#4a0000', accent: '#ff2222', text: '#ff8888', icon: '⚔️' },
-  SkyBlock:  { bg: '#002a40', accent: '#00BFFF', text: '#80DFFF', icon: '☁️' },
-  MiniGames: { bg: '#3a2e00', accent: '#FFD700', text: '#ffe860', icon: '🎮' },
-  Prison:    { bg: '#280040', accent: '#9B59B6', text: '#c388db', icon: '⛓️' },
-};
+/* ── Styles ── */
+const STORE_STYLE = { bg: '#3a2e00', accent: '#FFD700', text: '#ffe860', icon: '💰' };
 
-/* ── Store type styles (for store cards in right panel) ── */
-const STORE_TYPE_STYLES = {
-  Trading:     { bg: '#3a2e00', accent: '#FFD700', text: '#ffe860', icon: '💰' },
-  Redstone:    { bg: '#4a0000', accent: '#ff2222', text: '#ff8888', icon: '⚡' },
-  Farming:     { bg: '#0f2d00', accent: '#5D8A2C', text: '#8BC34A', icon: '🌾' },
-  PvP:         { bg: '#4a1000', accent: '#ff6600', text: '#ffaa60', icon: '⚔️' },
-  Creative:    { bg: '#002040', accent: '#3498DB', text: '#70b8ec', icon: '🎨' },
-  'Rare Items':{ bg: '#280040', accent: '#9B59B6', text: '#c388db', icon: '💎' },
-  Building:    { bg: '#3c2010', accent: '#c4a14a', text: '#e8cc88', icon: '🧱' },
-  Hardcore:    { bg: '#0a0a0a', accent: '#888888', text: '#cccccc', icon: '💀' },
-};
+/* ── Helpers ── */
+function getMembershipState(perm) {
+  if (!perm) return 'none';
+  if (perm.is_member) return 'member';
+  if (perm.status === 'pending') return 'pending';
+  if (perm.status === 'rejected') return 'rejected';
+  return 'none';
+}
 
-/* ── Filler data ── */
-const FILLER_SERVERS = [
-  {
-    id: 1, name: 'SurvivalCraft', owner: 'Steve_Builder', type: 'Survival',
-    status: 'Online', members: 247,
-    stores: [
-      { id: 1, name: 'Diamond Emporium',  type: 'Trading',    owner: 'Steve_Builder',  updated: '2h ago'  },
-      { id: 9, name: 'Farm Fresh',        type: 'Farming',    owner: 'CropKing2024',   updated: '45m ago' },
-      { id: 7, name: 'Build Supply Co.',  type: 'Building',   owner: 'ArchitectXL',    updated: '12h ago' },
-      { id: 6, name: 'Rare Finds Shop',   type: 'Rare Items', owner: 'TreasureHuntr',  updated: '2d ago'  },
-    ],
-  },
-  {
-    id: 2, name: 'Redtech SMP', owner: 'PistonPro99', type: 'SMP',
-    status: 'Online', members: 134,
-    stores: [
-      { id: 2,  name: 'Redstone Depot',    type: 'Redstone',  owner: 'PistonPro99',  updated: '1d ago'  },
-      { id: 7,  name: 'Build Supply Co.',  type: 'Building',  owner: 'ArchitectXL',  updated: '12h ago' },
-    ],
-  },
-  {
-    id: 3, name: 'FarmLife MC', owner: 'FarmerJoe42', type: 'Survival',
-    status: 'Online', members: 89,
-    stores: [
-      { id: 3, name: 'The Pig Farm',  type: 'Farming', owner: 'FarmerJoe42',  updated: '6h ago'  },
-      { id: 9, name: 'Farm Fresh',   type: 'Farming', owner: 'CropKing2024', updated: '45m ago' },
-    ],
-  },
-  {
-    id: 4, name: 'BattleMC', owner: 'SwordMaster_X', type: 'Factions',
-    status: 'Online', members: 312,
-    stores: [
-      { id: 4,  name: 'PvP Arsenal',    type: 'PvP', owner: 'SwordMaster_X', updated: '30m ago' },
-      { id: 10, name: 'Iron Fortress',  type: 'PvP', owner: 'BlackSmith99',  updated: '5h ago'  },
-    ],
-  },
-  {
-    id: 5, name: 'BuildCraft Pro', owner: 'PixelArtist', type: 'Creative',
-    status: 'Online', members: 178,
-    stores: [
-      { id: 5,  name: 'Creative Corner',  type: 'Creative', owner: 'PixelArtist', updated: '3h ago'  },
-      { id: 7,  name: 'Build Supply Co.', type: 'Building', owner: 'ArchitectXL', updated: '12h ago' },
-      { id: 12, name: 'Stone Works',      type: 'Building', owner: 'MasonRock',   updated: '8h ago'  },
-    ],
-  },
-  {
-    id: 6, name: 'VaultMC', owner: 'TreasureHuntr', type: 'SMP',
-    status: 'Online', members: 203,
-    stores: [
-      { id: 6,  name: 'Rare Finds Shop',   type: 'Rare Items', owner: 'TreasureHuntr', updated: '2d ago' },
-      { id: 11, name: 'Enchant Palace',    type: 'Rare Items', owner: 'WizardSteve',   updated: '1d ago' },
-      { id: 1,  name: 'Diamond Emporium', type: 'Trading',    owner: 'Steve_Builder', updated: '2h ago' },
-    ],
-  },
-  {
-    id: 7, name: 'MegaBuild', owner: 'ArchitectXL', type: 'Creative',
-    status: 'Offline', members: 95,
-    stores: [
-      { id: 7,  name: 'Build Supply Co.', type: 'Building', owner: 'ArchitectXL', updated: '3d ago' },
-      { id: 12, name: 'Stone Works',      type: 'Building', owner: 'MasonRock',   updated: '1d ago' },
-    ],
-  },
-  {
-    id: 8, name: 'HardCore SMP', owner: 'SurvivorPro1', type: 'Hardcore',
-    status: 'Online', members: 41,
-    stores: [
-      { id: 8,  name: 'Hardcore Hut',  type: 'Hardcore', owner: 'SurvivorPro1', updated: '4d ago' },
-      { id: 10, name: 'Iron Fortress', type: 'PvP',      owner: 'BlackSmith99', updated: '5h ago' },
-    ],
-  },
-  {
-    id: 9, name: 'HarvestMC', owner: 'CropKing2024', type: 'Survival',
-    status: 'Online', members: 67,
-    stores: [
-      { id: 9, name: 'Farm Fresh', type: 'Farming', owner: 'CropKing2024', updated: '45m ago' },
-    ],
-  },
-  {
-    id: 10, name: 'War Games', owner: 'BlackSmith99', type: 'Factions',
-    status: 'Online', members: 289,
-    stores: [
-      { id: 10, name: 'Iron Fortress', type: 'PvP', owner: 'BlackSmith99',  updated: '5h ago'  },
-      { id: 4,  name: 'PvP Arsenal',  type: 'PvP', owner: 'SwordMaster_X', updated: '30m ago' },
-    ],
-  },
-  {
-    id: 11, name: 'Magic Realm', owner: 'WizardSteve', type: 'SMP',
-    status: 'Online', members: 152,
-    stores: [
-      { id: 11, name: 'Enchant Palace',  type: 'Rare Items', owner: 'WizardSteve',    updated: '1d ago' },
-      { id: 6,  name: 'Rare Finds Shop', type: 'Rare Items', owner: 'TreasureHuntr', updated: '2d ago' },
-    ],
-  },
-  {
-    id: 12, name: 'StoneCraft', owner: 'MasonRock', type: 'Survival',
-    status: 'Offline', members: 58,
-    stores: [
-      { id: 12, name: 'Stone Works', type: 'Building', owner: 'MasonRock', updated: '1d ago' },
-    ],
-  },
-];
-
-/* ── Left panel: server card ── */
+/* ── Server card (left panel) ── */
 function ServerCard({ server, selected, onSelect }) {
-  const style   = SERVER_TYPES[server.type] || SERVER_TYPES.Survival;
-  const isOnline = server.status === 'Online';
+  const state = getMembershipState(server.userPermission);
+
+  const badge = {
+    member:   { label: '✓ Joined',  bg: '#0f2d00', color: '#7BC63A', border: '#5D8A2C' },
+    pending:  { label: '⏳ Pending', bg: '#3a2e00', color: '#FFD700', border: '#b8960a' },
+    rejected: { label: '✕ Rejected', bg: '#2d0000', color: '#ff8888', border: '#aa2222' },
+    none:     null,
+  }[state];
 
   return (
     <div
       className={`mc-server-card ${selected ? 'mc-server-card-selected' : ''}`}
       onClick={() => onSelect(server)}
+      style={{ cursor: 'pointer' }}
     >
-      {/* Type icon */}
-      <div className="mc-server-card-icon" style={{ backgroundColor: style.bg }}>
-        <span style={{ fontSize: '24px' }}>{style.icon}</span>
+      <div className="mc-server-card-icon" style={{ backgroundColor: '#1a2a1a' }}>
+        <span style={{ fontSize: '24px' }}>🌐</span>
       </div>
 
-      {/* Info */}
-      <div className="mc-server-card-info">
-        <p className="font-press-start text-[8px] leading-relaxed mb-1" style={{ color: '#FFF0D0' }}>
-          {server.name}
+      <div className="mc-server-card-info" style={{ flex: 1, minWidth: 0 }}>
+        <p className="font-press-start text-[8px] leading-relaxed mb-1 truncate" style={{ color: '#FFF0D0' }}>
+          {server.display_name}
         </p>
-        <p className="font-space-mono text-[9px] mb-2" style={{ color: '#E8C888' }}>
-          👤 {server.owner}
+        <p className="font-space-mono text-[9px] mb-1" style={{ color: '#E8C888' }}>
+          👤 {server.profiles?.username || 'Unknown'}
         </p>
-        <div className="flex items-center gap-2 flex-wrap">
+        <p className="font-space-mono text-[8px]" style={{ color: '#8A6030' }}>
+          ⚙ {server.mc_version || '—'}
+        </p>
+      </div>
+
+      <div className="flex flex-col items-end gap-2 flex-shrink-0 px-2">
+        {badge && (
           <span
             className="font-press-start text-[5px] px-1.5 py-0.5 border"
-            style={{ backgroundColor: style.bg, color: style.text, borderColor: style.accent }}
+            style={{ backgroundColor: badge.bg, color: badge.color, borderColor: badge.border }}
           >
-            {server.type}
+            {badge.label}
           </span>
-          <span className="font-space-mono text-[8px]" style={{ color: '#C4904A' }}>
-            🏪 {server.stores.length} stores
-          </span>
-          <span className="font-space-mono text-[8px]" style={{ color: '#C4904A' }}>
-            👥 {server.members}
-          </span>
-        </div>
-      </div>
-
-      {/* Online status + selected indicator */}
-      <div className="flex flex-col items-center justify-center gap-2 px-3 flex-shrink-0">
-        <span
-          className="font-press-start text-[5px]"
-          style={{ color: isOnline ? '#7BC63A' : '#666666' }}
-        >
-          {isOnline ? '● ON' : '● OFF'}
-        </span>
-        {selected && (
-          <span className="font-press-start text-[8px] text-green-400">▶</span>
         )}
+        {selected && <span className="font-press-start text-[8px] text-green-400">▶</span>}
       </div>
     </div>
   );
 }
 
-/* ── Right panel: empty state ── */
+/* ── Empty right panel ── */
 function EmptyPanel() {
   return (
     <div className="mc-store-right-empty">
@@ -193,186 +73,712 @@ function EmptyPanel() {
         Select a Server
       </p>
       <p className="font-space-mono text-[9px] text-center" style={{ color: '#8A6030', maxWidth: '200px', lineHeight: '1.6' }}>
-        Pick a server on the left to browse its stores
+        Browse servers on the left and join to access their stores
       </p>
     </div>
   );
 }
 
-/* ── Right panel: server stores view ── */
-function ServerStoresPanel({ server }) {
-  const serverStyle = SERVER_TYPES[server.type] || SERVER_TYPES.Survival;
-  const isOnline    = server.status === 'Online';
+/* ── Server header (reused in multiple states) ── */
+function ServerHeader({ server }) {
+  return (
+    <div className="mc-server-panel-header" style={{ borderBottom: '4px solid #000' }}>
+      <div className="mc-server-panel-icon" style={{ backgroundColor: '#1a2a1a' }}>
+        <span style={{ fontSize: '32px' }}>🌐</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        <h2 className="font-press-start text-[11px] leading-relaxed" style={{ color: '#FFF0D0' }}>
+          {server.display_name}
+        </h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-space-mono text-[9px]" style={{ color: '#E8C888' }}>
+            👤 {server.profiles?.username || 'Unknown'}
+          </span>
+          {server.mc_version && (
+            <span
+              className="font-press-start text-[6px] px-2 py-1 border-2"
+              style={{ backgroundColor: '#1a2a1a', color: '#8BC34A', borderColor: '#5D8A2C' }}
+            >
+              {server.mc_version}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Not-a-member panel ── */
+function JoinPanel({ server, onJoin, joining }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <ServerHeader server={server} />
+      <div className="mc-store-right-empty" style={{ flex: 1 }}>
+        <span style={{ fontSize: '48px', opacity: 0.5 }}>🔒</span>
+        <p className="font-press-start text-[9px] mt-4" style={{ color: '#FFF0D0', opacity: 0.8 }}>
+          Members Only
+        </p>
+        <p className="font-space-mono text-[9px] text-center mt-2" style={{ color: '#8A6030', maxWidth: '220px', lineHeight: '1.6' }}>
+          Request to join to browse stores and trade with this server's players
+        </p>
+        <button
+          onClick={() => onJoin(server.id)}
+          disabled={joining}
+          className="font-press-start text-[8px] mt-6 px-5 py-3 border-2"
+          style={{
+            backgroundColor: joining ? '#1a2a1a' : '#0f2d00',
+            color: joining ? '#5A7030' : '#7BC63A',
+            borderColor: joining ? '#3a5a20' : '#5D8A2C',
+            cursor: joining ? 'not-allowed' : 'pointer',
+            boxShadow: '3px 3px 0 #000',
+          }}
+        >
+          {joining ? 'Sending...' : '⛏ Request to Join'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Pending-approval panel ── */
+function PendingPanel({ server }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <ServerHeader server={server} />
+      <div className="mc-store-right-empty" style={{ flex: 1 }}>
+        <span style={{ fontSize: '48px' }}>⏳</span>
+        <p className="font-press-start text-[9px] mt-4" style={{ color: '#FFD700' }}>
+          Request Pending
+        </p>
+        <p className="font-space-mono text-[9px] text-center mt-2" style={{ color: '#8A6030', maxWidth: '220px', lineHeight: '1.6' }}>
+          A server admin must approve your request before you can access this server's stores
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Rejected panel ── */
+function RejectedPanel({ server, onJoin, joining }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <ServerHeader server={server} />
+      <div className="mc-store-right-empty" style={{ flex: 1 }}>
+        <span style={{ fontSize: '48px' }}>✕</span>
+        <p className="font-press-start text-[9px] mt-4" style={{ color: '#ff8888' }}>
+          Request Rejected
+        </p>
+        <p className="font-space-mono text-[9px] text-center mt-2" style={{ color: '#8A6030', maxWidth: '220px', lineHeight: '1.6' }}>
+          Your previous join request was rejected. You may submit a new request.
+        </p>
+        <button
+          onClick={() => onJoin(server.id)}
+          disabled={joining}
+          className="font-press-start text-[8px] mt-6 px-5 py-3 border-2"
+          style={{
+            backgroundColor: '#2d0000',
+            color: joining ? '#885555' : '#ff8888',
+            borderColor: '#aa2222',
+            cursor: joining ? 'not-allowed' : 'pointer',
+            boxShadow: '3px 3px 0 #000',
+          }}
+        >
+          {joining ? 'Sending...' : '↩ Re-apply'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Create-server form ── */
+function CreateServerForm({ onSubmit, onCancel, creating }) {
+  const [displayName, setDisplayName] = useState('');
+  const [mcVersion, setMcVersion]     = useState('');
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (displayName.trim()) onSubmit(displayName.trim(), mcVersion.trim() || null);
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      style={{ padding: '14px 16px', borderBottom: '4px solid #000', backgroundColor: '#001a10' }}
+    >
+      <p className="font-press-start text-[8px] mb-3" style={{ color: '#7BC63A' }}>🌐 New Server</p>
+
+      <div className="mb-3">
+        <label className="font-space-mono text-[9px] block mb-1" style={{ color: '#C4904A' }}>
+          Server Name *
+        </label>
+        <input
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          maxLength={60}
+          placeholder="My Survival SMP"
+          className="w-full font-space-mono text-[9px] px-2 py-1.5 border-2"
+          style={{ backgroundColor: '#0a0a00', color: '#FFF0D0', borderColor: '#5A3A14', outline: 'none' }}
+          required
+        />
+      </div>
+
+      <div className="mb-3">
+        <label className="font-space-mono text-[9px] block mb-1" style={{ color: '#C4904A' }}>
+          MC Version
+        </label>
+        <input
+          type="text"
+          value={mcVersion}
+          onChange={(e) => setMcVersion(e.target.value)}
+          maxLength={20}
+          placeholder="1.21.4"
+          className="w-full font-space-mono text-[9px] px-2 py-1.5 border-2"
+          style={{ backgroundColor: '#0a0a00', color: '#FFF0D0', borderColor: '#5A3A14', outline: 'none' }}
+        />
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={creating || !displayName.trim()}
+          className="font-press-start text-[7px] px-3 py-2 border-2"
+          style={{
+            backgroundColor: creating ? '#1a2a1a' : '#0f2d00',
+            color: creating ? '#5A7030' : '#7BC63A',
+            borderColor: '#5D8A2C',
+            cursor: creating ? 'not-allowed' : 'pointer',
+            boxShadow: '2px 2px 0 #000',
+          }}
+        >
+          {creating ? 'Creating...' : '✓ Create'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="font-press-start text-[7px] px-3 py-2 border-2"
+          style={{ backgroundColor: '#1a0a0a', color: '#ff8888', borderColor: '#aa2222', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}
+        >
+          ✕ Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/* ── Create-store form ── */
+function CreateStoreForm({ onSubmit, onCancel, creating }) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (name.trim()) onSubmit(name.trim(), description.trim());
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{ padding: '16px', borderBottom: '4px solid #000', backgroundColor: '#1a1a0a' }}>
+      <p className="font-press-start text-[8px] mb-3" style={{ color: '#FFD700' }}>🏪 New Store</p>
+
+      <div className="mb-3">
+        <label className="font-space-mono text-[9px] block mb-1" style={{ color: '#C4904A' }}>
+          Store Name *
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={60}
+          placeholder="My Trading Post"
+          className="w-full font-space-mono text-[9px] px-2 py-1.5 border-2"
+          style={{
+            backgroundColor: '#0a0a00',
+            color: '#FFF0D0',
+            borderColor: '#5A3A14',
+            outline: 'none',
+          }}
+          required
+        />
+      </div>
+
+      <div className="mb-3">
+        <label className="font-space-mono text-[9px] block mb-1" style={{ color: '#C4904A' }}>
+          Description
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          maxLength={200}
+          rows={2}
+          placeholder="What does your store offer?"
+          className="w-full font-space-mono text-[9px] px-2 py-1.5 border-2 resize-none"
+          style={{
+            backgroundColor: '#0a0a00',
+            color: '#FFF0D0',
+            borderColor: '#5A3A14',
+            outline: 'none',
+          }}
+        />
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={creating || !name.trim()}
+          className="font-press-start text-[7px] px-3 py-2 border-2"
+          style={{
+            backgroundColor: creating ? '#1a2a1a' : '#0f2d00',
+            color: creating ? '#5A7030' : '#7BC63A',
+            borderColor: '#5D8A2C',
+            cursor: creating ? 'not-allowed' : 'pointer',
+            boxShadow: '2px 2px 0 #000',
+          }}
+        >
+          {creating ? 'Creating...' : '✓ Create'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="font-press-start text-[7px] px-3 py-2 border-2"
+          style={{
+            backgroundColor: '#1a0a0a',
+            color: '#ff8888',
+            borderColor: '#aa2222',
+            cursor: 'pointer',
+            boxShadow: '2px 2px 0 #000',
+          }}
+        >
+          ✕ Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/* ── Member panel (stores + optional admin section) ── */
+function MemberPanel({ server, stores, storesLoading, pendingRequests, onApprove, onReject, onCreateStore, showCreateForm, onToggleCreate, creating }) {
+  const isAdmin = server.userPermission?.is_admin;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <ServerHeader server={server} />
 
-      {/* ── Server identity header ── */}
-      <div
-        className="mc-server-panel-header"
-        style={{ borderBottom: '4px solid #000' }}
-      >
-        {/* Icon */}
-        <div
-          className="mc-server-panel-icon"
-          style={{ backgroundColor: serverStyle.bg }}
-        >
-          <span style={{ fontSize: '32px' }}>{serverStyle.icon}</span>
+      {/* Admin: pending requests */}
+      {isAdmin && pendingRequests.length > 0 && (
+        <div style={{ borderBottom: '4px solid #000', backgroundColor: '#1a1200', padding: '12px 16px' }}>
+          <p className="font-press-start text-[7px] mb-2" style={{ color: '#FFD700' }}>
+            ⚡ Pending Requests ({pendingRequests.length})
+          </p>
+          {pendingRequests.map((req) => (
+            <div
+              key={req.id}
+              className="flex items-center justify-between mb-2 px-2 py-1.5 border"
+              style={{ backgroundColor: '#0a0a00', borderColor: '#3a2e00' }}
+            >
+              <span className="font-space-mono text-[9px]" style={{ color: '#E8C888' }}>
+                👤 {req.profiles?.username || req.profiles?.name || req.user_id.slice(0, 8)}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onApprove(req.id)}
+                  className="font-press-start text-[6px] px-2 py-1 border"
+                  style={{ backgroundColor: '#0f2d00', color: '#7BC63A', borderColor: '#5D8A2C', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}
+                >
+                  ✓
+                </button>
+                <button
+                  onClick={() => onReject(req.id)}
+                  className="font-press-start text-[6px] px-2 py-1 border"
+                  style={{ backgroundColor: '#2d0000', color: '#ff8888', borderColor: '#aa2222', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+      )}
 
-        {/* Name + owner + badges */}
-        <div className="flex flex-col gap-2">
-          <h2 className="font-press-start text-[11px] leading-relaxed" style={{ color: '#FFF0D0' }}>
-            {server.name}
-          </h2>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button className="mc-clickable-tag" style={{ fontSize: '9px', color: '#E8C888' }}>
-              👤 {server.owner}
-            </button>
-            <span
-              className="font-press-start text-[6px] px-2 py-1 border-2"
-              style={{ backgroundColor: serverStyle.bg, color: serverStyle.text, borderColor: serverStyle.accent }}
-            >
-              {server.type}
-            </span>
-            <span
-              className="font-press-start text-[6px] px-2 py-1 border-2"
-              style={{
-                backgroundColor: isOnline ? '#0f2d00' : '#1a1a1a',
-                color:           isOnline ? '#7BC63A' : '#888888',
-                borderColor:     isOnline ? '#5D8A2C' : '#555555',
-              }}
-            >
-              ● {server.status}
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="font-space-mono text-[9px]" style={{ color: '#C4904A' }}>
-              👥 {server.members} members
-            </span>
-            <span className="font-space-mono text-[9px]" style={{ color: '#C4904A' }}>
-              🏪 {server.stores.length} stores listed
-            </span>
-          </div>
-        </div>
+      {/* Create store toggle */}
+      <div style={{ padding: '10px 16px', borderBottom: '4px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span className="font-space-mono text-[9px]" style={{ color: '#C4904A' }}>
+          🏪 {storesLoading ? '...' : `${stores.length} stores`}
+        </span>
+        {!showCreateForm && (
+          <button
+            onClick={onToggleCreate}
+            className="font-press-start text-[7px] px-3 py-1.5 border-2"
+            style={{
+              backgroundColor: '#002040',
+              color: '#70b8ec',
+              borderColor: '#3498DB',
+              cursor: 'pointer',
+              boxShadow: '2px 2px 0 #000',
+            }}
+          >
+            + Create Store
+          </button>
+        )}
       </div>
 
-      {/* ── Scrollable stores grid ── */}
-      <div className="mc-server-stores-scroll">
-        <div className="mc-server-stores-grid">
-          {server.stores.map((store) => {
-            const storeStyle = STORE_TYPE_STYLES[store.type] || STORE_TYPE_STYLES.Trading;
-            return (
+      {/* Create store form */}
+      {showCreateForm && (
+        <CreateStoreForm
+          onSubmit={onCreateStore}
+          onCancel={onToggleCreate}
+          creating={creating}
+        />
+      )}
+
+      {/* Stores grid */}
+      <div className="mc-server-stores-scroll" style={{ flex: 1, overflowY: 'auto' }}>
+        {storesLoading ? (
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <p className="font-space-mono text-[9px]" style={{ color: '#8A6030' }}>Loading stores...</p>
+          </div>
+        ) : stores.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <span style={{ fontSize: '40px', opacity: 0.35 }}>🏪</span>
+            <p className="font-space-mono text-[9px] mt-3" style={{ color: '#8A6030' }}>
+              No stores yet — be the first!
+            </p>
+          </div>
+        ) : (
+          <div className="mc-server-stores-grid">
+            {stores.map((store) => (
               <Link
                 key={store.id}
                 href={`/home/store/${store.id}`}
                 className="mc-server-store-card"
                 style={{ textDecoration: 'none' }}
               >
-                {/* Store icon block */}
-                <div
-                  className="mc-server-store-icon"
-                  style={{ backgroundColor: storeStyle.bg }}
-                >
-                  <span style={{ fontSize: '36px', position: 'relative', zIndex: 1 }}>
-                    {storeStyle.icon}
-                  </span>
+                <div className="mc-server-store-icon" style={{ backgroundColor: STORE_STYLE.bg }}>
+                  <span style={{ fontSize: '36px', position: 'relative', zIndex: 1 }}>💰</span>
                 </div>
-
-                {/* Store info */}
                 <div className="mc-server-store-info">
-                  <p className="font-press-start text-[8px] leading-relaxed mb-2" style={{ color: '#FFF0D0' }}>
-                    {store.name}
+                  <p className="font-press-start text-[8px] leading-relaxed mb-1" style={{ color: '#FFF0D0' }}>
+                    {store.name || store.description || 'Unnamed Store'}
                   </p>
-                  <p className="font-space-mono text-[9px] mb-2" style={{ color: '#E8C888' }}>
-                    👤 {store.owner}
-                  </p>
-                  <span
-                    className="font-press-start text-[5px] px-1.5 py-0.5 border inline-block"
-                    style={{ backgroundColor: storeStyle.bg, color: storeStyle.text, borderColor: storeStyle.accent }}
-                  >
-                    {store.type}
-                  </span>
-                  <p className="font-space-mono text-[8px] mt-2" style={{ color: '#8A6030' }}>
-                    🔄 {store.updated}
-                  </p>
+                  {store.description && store.name && (
+                    <p className="font-space-mono text-[8px] mb-2" style={{ color: '#8A6030' }}>
+                      {store.description.length > 40 ? store.description.slice(0, 38) + '…' : store.description}
+                    </p>
+                  )}
                 </div>
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-
     </div>
   );
 }
 
 /* ── Servers page ── */
 export default function ServersPage() {
+  const [token, setToken]                   = useState(null);
+  const [servers, setServers]               = useState([]);
+  const [searchInput, setSearchInput]       = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [loading, setLoading]               = useState(true);
   const [selectedServer, setSelectedServer] = useState(null);
+  const [stores, setStores]                 = useState([]);
+  const [storesLoading, setStoresLoading]   = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [joining, setJoining]                     = useState(false);
+  const [showCreateServer, setShowCreateServer]   = useState(false);
+  const [creatingServer, setCreatingServer]       = useState(false);
+  const [showCreateForm, setShowCreateForm]       = useState(false);
+  const [creating, setCreating]                   = useState(false);
 
-  const handleSelect = (server) => {
-    setSelectedServer((prev) => (prev?.id === server.id ? null : server));
-  };
+  // Get token once on mount
+  useEffect(() => {
+    createClient().auth.getSession().then(({ data: { session } }) => {
+      setToken(session?.access_token || null);
+    });
+  }, []);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchInput), 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // Fetch servers when token or search changes
+  const fetchServers = useCallback(async (search) => {
+    if (!token) return [];
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/v1/servers?search=${encodeURIComponent(search)}&limit=30`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      const list = data.servers || [];
+      setServers(list);
+      // Keep selected server in sync with fresh permission data from API
+      setSelectedServer((prev) => prev ? (list.find((s) => s.id === prev.id) || prev) : null);
+      return list;
+    } catch (err) {
+      console.error('Failed to load servers:', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchServers(debouncedSearch);
+  }, [fetchServers, debouncedSearch]);
+
+  async function handleSelectServer(server) {
+    if (selectedServer?.id === server.id) { setSelectedServer(null); return; }
+    setSelectedServer(server);
+    setStores([]);
+    setPendingRequests([]);
+    setShowCreateForm(false);
+
+    if (server.userPermission?.is_member) {
+      setStoresLoading(true);
+      try {
+        const [storesRes, reqRes] = await Promise.all([
+          fetch(`/api/v1/${server.id}/stores`, { headers: { Authorization: `Bearer ${token}` } }),
+          server.userPermission?.is_admin
+            ? fetch(`/api/v1/servers/${server.id}/join-requests`, { headers: { Authorization: `Bearer ${token}` } })
+            : Promise.resolve(null),
+        ]);
+
+        const storesData = await storesRes.json();
+        setStores(storesData.stores || []);
+
+        if (reqRes?.ok) {
+          const reqData = await reqRes.json();
+          setPendingRequests(reqData.requests || []);
+        }
+      } catch (err) {
+        console.error('Failed to load server data:', err);
+      } finally {
+        setStoresLoading(false);
+      }
+    }
+  }
+
+  async function handleCreateServer(displayName, mcVersion) {
+    setCreatingServer(true);
+    try {
+      const res = await fetch('/api/v1/servers', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ display_name: displayName, mc_version: mcVersion }),
+      });
+      if (res.ok) {
+        const { server } = await res.json();
+        setShowCreateServer(false);
+
+        // Fetch fresh list — the new server + its permission should be in there
+        const list = await fetchServers(debouncedSearch);
+        const freshServer = list.find((s) => s.id === server.id);
+
+        // Use fresh API data if available; otherwise fall back to known permission
+        const knownPerm = { is_member: true, is_admin: true, status: 'approved' };
+        const toSelect = freshServer
+          ? { ...freshServer, userPermission: freshServer.userPermission ?? knownPerm }
+          : { ...server, profiles: null, userPermission: knownPerm };
+
+        // Patch the servers list so clicking the card later also shows the right state
+        setServers((prev) =>
+          prev.map((s) =>
+            s.id === server.id
+              ? { ...s, userPermission: toSelect.userPermission }
+              : s
+          )
+        );
+
+        setSelectedServer(toSelect);
+        setStores([]);
+        setPendingRequests([]);
+        setShowCreateForm(false);
+      }
+    } catch (err) {
+      console.error('Create server failed:', err);
+    } finally {
+      setCreatingServer(false);
+    }
+  }
+
+  async function handleJoin(serverId) {
+    setJoining(true);
+    try {
+      await fetch(`/api/v1/servers/${serverId}/join`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await fetchServers(debouncedSearch);
+    } catch (err) {
+      console.error('Join failed:', err);
+    } finally {
+      setJoining(false);
+    }
+  }
+
+  async function handleApprove(requestId) {
+    await fetch(`/api/v1/servers/${selectedServer.id}/join-requests/${requestId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve' }),
+    });
+    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+  }
+
+  async function handleReject(requestId) {
+    await fetch(`/api/v1/servers/${selectedServer.id}/join-requests/${requestId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject' }),
+    });
+    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+  }
+
+  async function handleCreateStore(name, description) {
+    setCreating(true);
+    try {
+      const res = await fetch(`/api/v1/${selectedServer.id}/stores`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description }),
+      });
+      if (res.ok) {
+        const storesRes = await fetch(`/api/v1/${selectedServer.id}/stores`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await storesRes.json();
+        setStores(data.stores || []);
+        setShowCreateForm(false);
+      }
+    } catch (err) {
+      console.error('Create store failed:', err);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  const memberState = getMembershipState(selectedServer?.userPermission);
 
   return (
     <div className="mc-store-layout">
 
-      {/* ════════════════════════════
+      {/* ═══════════════════════
           LEFT — server list
-      ════════════════════════════ */}
+      ═══════════════════════ */}
       <div className="mc-store-left">
 
-        {/* Page header */}
+        {/* Header */}
         <div className="mc-store-header">
           <div className="mc-store-header-accent" />
           <div className="mc-store-header-body">
-            <h1 className="font-press-start text-[10px] leading-relaxed mb-1" style={{ color: '#FFF0D0' }}>
-              🌐 Servers
-            </h1>
-            <p className="font-space-mono text-[9px]" style={{ color: '#C4904A' }}>
-              {FILLER_SERVERS.length} servers &nbsp;·&nbsp;{' '}
-              {FILLER_SERVERS.filter(s => s.status === 'Online').length} online
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="font-press-start text-[10px] leading-relaxed" style={{ color: '#FFF0D0' }}>
+                🌐 Servers
+              </h1>
+              <button
+                onClick={() => setShowCreateServer((v) => !v)}
+                className="font-press-start text-[7px] px-2 py-1.5 border-2"
+                style={{
+                  backgroundColor: showCreateServer ? '#1a0a0a' : '#001a10',
+                  color: showCreateServer ? '#ff8888' : '#7BC63A',
+                  borderColor: showCreateServer ? '#aa2222' : '#5D8A2C',
+                  cursor: 'pointer',
+                  boxShadow: '2px 2px 0 #000',
+                }}
+              >
+                {showCreateServer ? '✕' : '+ New'}
+              </button>
+            </div>
+
+            {/* Search bar */}
+            <div className="flex items-center gap-2">
+              <span className="font-space-mono text-[10px]" style={{ color: '#8A6030' }}>🔍</span>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search servers..."
+                className="flex-1 font-space-mono text-[9px] px-2 py-1 border-2"
+                style={{ backgroundColor: '#0a0a00', color: '#FFF0D0', borderColor: '#5A3A14', outline: 'none' }}
+              />
+            </div>
+
+            <p className="font-space-mono text-[9px] mt-2" style={{ color: '#C4904A' }}>
+              {loading ? 'Loading...' : `${servers.length} servers`}
             </p>
           </div>
         </div>
 
-        {/* Scrollable server list */}
+        {/* Create server form (inline, below header) */}
+        {showCreateServer && (
+          <CreateServerForm
+            onSubmit={handleCreateServer}
+            onCancel={() => setShowCreateServer(false)}
+            creating={creatingServer}
+          />
+        )}
+
+        {/* Server list */}
         <div className="mc-store-items-scroll">
-          {FILLER_SERVERS.map((server) => (
+          {!loading && servers.length === 0 && (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <p className="font-space-mono text-[9px]" style={{ color: '#8A6030' }}>No servers found</p>
+            </div>
+          )}
+          {servers.map((server) => (
             <ServerCard
               key={server.id}
               server={server}
               selected={selectedServer?.id === server.id}
-              onSelect={handleSelect}
+              onSelect={handleSelectServer}
             />
           ))}
         </div>
-
       </div>
 
-      {/* ════════════════════════════
-          RIGHT — stores panel
-      ════════════════════════════ */}
+      {/* ═══════════════════════
+          RIGHT — context panel
+      ═══════════════════════ */}
       <div className="mc-store-right">
-
-        {/* Right header bar */}
         <div className="mc-store-right-header">
           <span className="font-press-start text-[8px] text-green-400">
-            {selectedServer ? '🏪 Stores' : '🌐 Browse Servers'}
+            {selectedServer ? '🏪 ' + selectedServer.display_name : '🌐 Browse Servers'}
           </span>
-          {selectedServer && (
-            <span className="font-space-mono text-[9px] ml-2" style={{ color: '#C4904A' }}>
-              — {selectedServer.name}
-            </span>
-          )}
         </div>
 
-        {selectedServer
-          ? <ServerStoresPanel server={selectedServer} />
-          : <EmptyPanel />
-        }
+        {!selectedServer && <EmptyPanel />}
 
+        {selectedServer && memberState === 'none' && (
+          <JoinPanel server={selectedServer} onJoin={handleJoin} joining={joining} />
+        )}
+
+        {selectedServer && memberState === 'pending' && (
+          <PendingPanel server={selectedServer} />
+        )}
+
+        {selectedServer && memberState === 'rejected' && (
+          <RejectedPanel server={selectedServer} onJoin={handleJoin} joining={joining} />
+        )}
+
+        {selectedServer && memberState === 'member' && (
+          <MemberPanel
+            server={selectedServer}
+            stores={stores}
+            storesLoading={storesLoading}
+            pendingRequests={pendingRequests}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onCreateStore={handleCreateStore}
+            showCreateForm={showCreateForm}
+            onToggleCreate={() => setShowCreateForm((v) => !v)}
+            creating={creating}
+          />
+        )}
       </div>
 
     </div>

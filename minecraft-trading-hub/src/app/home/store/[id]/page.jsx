@@ -1,146 +1,39 @@
 "use client";
 
-import { useState } from 'react';
-
-/* ── Filler store data ── */
-const FILLER_STORE = {
-  name:        'Diamond Emporium',
-  owner:       'Steve_Builder',
-  server:      'SurvivalCraft',
-  type:        'Trading',
-  status:      'Open',
-  created:     '3 months ago',
-  description: 'The finest trading post in all of SurvivalCraft. Specialising in rare diamonds, emeralds, and high-tier enchanted gear.',
-  typeStyle:   { bg: '#3a2e00', accent: '#FFD700', text: '#ffe860', icon: '💰' },
-};
-
-const FILLER_ITEMS = [
-  {
-    id: 1,  name: 'Diamond Sword',
-    icon: '⚔️',  color: '#1488C8',  darkBg: '#0A3A6A',
-    listed: '2 days ago',   cost: '64 Gold Ingots',
-    qty: 3,   tradeType: 'Selling',
-    enchant: 'Sharpness V · Unbreaking III · Looting II',
-    notes: 'Top-tier combat weapon. Freshly enchanted and ready for battle.',
-  },
-  {
-    id: 2,  name: 'Power V Bow',
-    icon: '🏹',  color: '#8B5A2B',  darkBg: '#4A2810',
-    listed: '3 days ago',   cost: '32 Emeralds',
-    qty: 5,   tradeType: 'Selling',
-    enchant: 'Power V · Infinity I · Flame I · Punch II',
-    notes: 'Shoots flaming arrows. Infinity means you only ever need one arrow.',
-  },
-  {
-    id: 3,  name: 'Netherite Pickaxe',
-    icon: '⛏️',  color: '#4A3728',  darkBg: '#1A1210',
-    listed: '5 days ago',   cost: '128 Iron Ingots',
-    qty: 1,   tradeType: 'Selling',
-    enchant: 'Efficiency V · Fortune III · Unbreaking III',
-    notes: 'Max-level fortune — essential for bulk diamond and ancient debris mining.',
-  },
-  {
-    id: 4,  name: 'Stack of Diamonds',
-    icon: '💎',  color: '#1EAAF1',  darkBg: '#0A5A8A',
-    listed: '1 day ago',    cost: '16 Emeralds',
-    qty: 10,  tradeType: 'Selling',
-    enchant: 'None',
-    notes: 'Bulk diamonds ready for crafting netherite gear or high-tier trades.',
-  },
-  {
-    id: 5,  name: 'Elytra',
-    icon: '🦋',  color: '#8A2BE2',  darkBg: '#3A1060',
-    listed: '1 week ago',   cost: '256 Gold Ingots',
-    qty: 1,   tradeType: 'Selling',
-    enchant: 'Unbreaking III · Mending',
-    notes: 'Fully repaired with Mending applied. Fly across the overworld in style.',
-  },
-  {
-    id: 6,  name: 'Shulker Box',
-    icon: '📦',  color: '#7B4A9E',  darkBg: '#3A1A5A',
-    listed: '4 days ago',   cost: '48 Emeralds',
-    qty: 8,   tradeType: 'Selling',
-    enchant: 'None',
-    notes: 'Portable storage containers. Multiple colours available on request.',
-  },
-  {
-    id: 7,  name: 'Trident',
-    icon: '🔱',  color: '#00B4D8',  darkBg: '#004A6A',
-    listed: '6 days ago',   cost: '96 Iron Ingots',
-    qty: 2,   tradeType: 'Selling',
-    enchant: 'Riptide III · Loyalty III · Channeling',
-    notes: 'Extremely rare ocean drop. Three powerful enchantments pre-applied.',
-  },
-  {
-    id: 8,  name: 'Beacon',
-    icon: '🌟',  color: '#7FFFD4',  darkBg: '#1A6A5A',
-    listed: '2 weeks ago',  cost: '512 Iron Ingots',
-    qty: 1,   tradeType: 'Selling',
-    enchant: 'None',
-    notes: 'Full beacon setup ready to place. Wither Skeleton skull included in price.',
-  },
-  {
-    id: 9,  name: 'Mending Book',
-    icon: '📚',  color: '#C4A14A',  darkBg: '#5A4010',
-    listed: '3 days ago',   cost: '64 Emeralds',
-    qty: 6,   tradeType: 'Selling',
-    enchant: 'Mending I',
-    notes: 'One of the most sought-after enchantments. Apply to any tool or armour.',
-  },
-  {
-    id: 10, name: 'Wither Skull',
-    icon: '💀',  color: '#444444',  darkBg: '#0A0A0A',
-    listed: '1 week ago',   cost: '128 Gold Ingots',
-    qty: 3,   tradeType: 'Selling',
-    enchant: 'None',
-    notes: 'Required to summon the Wither. Sourced directly from the Nether Fortress.',
-  },
-  {
-    id: 11, name: 'Totem of Undying',
-    icon: '🏺',  color: '#DAA520',  darkBg: '#5A4000',
-    listed: '5 days ago',   cost: '96 Emeralds',
-    qty: 4,   tradeType: 'Selling',
-    enchant: 'None',
-    notes: 'Grants a second life when held in hand. Essential for end-game raids.',
-  },
-  {
-    id: 12, name: 'Nether Star',
-    icon: '⭐',  color: '#D8D8D8',  darkBg: '#5A5A5A',
-    listed: '3 weeks ago',  cost: '1024 Iron Ingots',
-    qty: 1,   tradeType: 'Selling',
-    enchant: 'None',
-    notes: 'Used to craft a Beacon. Only dropped by the Wither boss. Extremely rare.',
-  },
-];
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { createClient } from '../../../lib/supabaseClient';
 
 /* ── Item card (left scroll list) ── */
-function ItemCard({ item, selected, onSelect }) {
+function ListingCard({ listing, selected, onSelect }) {
+  const offering = listing.listing_items?.filter((li) => li.is_selling_not_recieving) || [];
+  const wanting  = listing.listing_items?.filter((li) => !li.is_selling_not_recieving) || [];
+
+  const offerLabel = offering.length
+    ? offering.map((li) => `${li.quantity}x ${li.item?.name}`).join(', ')
+    : '—';
+  const wantLabel = wanting.length
+    ? wanting.map((li) => `${li.quantity}x ${li.item?.name}`).join(', ')
+    : 'Open trade';
+
   return (
     <div
       className={`mc-item-card ${selected ? 'mc-item-card-selected' : ''}`}
-      onClick={() => onSelect(item)}
+      onClick={() => onSelect(listing)}
     >
-      {/* Block image */}
-      <div className="mc-item-card-img" style={{ backgroundColor: item.color }}>
-        <span style={{ fontSize: '30px', position: 'relative', zIndex: 1 }}>
-          {item.icon}
-        </span>
+      <div className="mc-item-card-img" style={{ backgroundColor: '#3a2e00' }}>
+        <span style={{ fontSize: '30px', position: 'relative', zIndex: 1 }}>📦</span>
       </div>
 
-      {/* Info */}
       <div className="mc-item-card-info">
         <p className="font-press-start text-[8px] leading-relaxed" style={{ color: '#FFF0D0' }}>
-          {item.name}
+          {offerLabel.length > 40 ? offerLabel.slice(0, 38) + '…' : offerLabel}
         </p>
         <p className="font-space-mono text-[9px]" style={{ color: '#E8C888' }}>
-          📅 {item.listed}
-        </p>
-        <p className="font-space-mono text-[9px] font-bold" style={{ color: '#FFD700' }}>
-          💰 {item.cost}
+          🔄 for: {wantLabel.length > 36 ? wantLabel.slice(0, 34) + '…' : wantLabel}
         </p>
       </div>
 
-      {/* Selected arrow indicator */}
       {selected && (
         <div
           className="flex items-center justify-center px-3 flex-shrink-0"
@@ -159,130 +52,175 @@ function EmptyDetail() {
     <div className="mc-store-right-empty">
       <span style={{ fontSize: '64px', opacity: 0.35 }}>📦</span>
       <p className="font-press-start text-[9px] text-green-400" style={{ opacity: 0.6 }}>
-        Select an Item
+        Select a Listing
       </p>
       <p className="font-space-mono text-[9px] text-center" style={{ color: '#8A6030', maxWidth: '200px', lineHeight: '1.6' }}>
-        Click any listing on the left to view full details
+        Click any listing on the left to view full trade details
       </p>
     </div>
   );
 }
 
-/* ── Right panel: item detail ── */
-function ItemDetail({ item }) {
-  const isEnchanted = item.enchant !== 'None';
-  const tradeBg     = item.tradeType === 'Selling' ? '#0f2d00' : '#280040';
-  const tradeColor  = item.tradeType === 'Selling' ? '#8BC34A' : '#c388db';
-  const tradeBorder = item.tradeType === 'Selling' ? '#5D8A2C' : '#9B59B6';
+/* ── Right panel: listing detail ── */
+function ListingDetail({ listing }) {
+  const offering = listing.listing_items?.filter((li) => li.is_selling_not_recieving) || [];
+  const wanting  = listing.listing_items?.filter((li) => !li.is_selling_not_recieving) || [];
 
   return (
     <div className="mc-store-right-detail">
 
-      {/* ── Item header ── */}
-      <div
-        className="flex gap-4 items-start mb-6 pb-5"
-        style={{ borderBottom: '4px solid #000' }}
-      >
-        {/* Large pixel image */}
-        <div className="mc-detail-img" style={{ backgroundColor: item.color }}>
-          <span style={{ fontSize: '48px', position: 'relative', zIndex: 1 }}>
-            {item.icon}
-          </span>
+      <div className="flex gap-4 items-start mb-6 pb-5" style={{ borderBottom: '4px solid #000' }}>
+        <div className="mc-detail-img" style={{ backgroundColor: '#3a2e00' }}>
+          <span style={{ fontSize: '48px', position: 'relative', zIndex: 1 }}>📦</span>
         </div>
-
         <div className="flex flex-col gap-2 flex-1">
           <p className="font-press-start text-[11px] leading-relaxed" style={{ color: '#FFF0D0' }}>
-            {item.name}
+            Trade Listing
           </p>
-
-          {/* Enchantments — purple, like in-game */}
-          {isEnchanted && (
-            <p className="font-space-mono text-[8px] leading-relaxed" style={{ color: '#B388FF' }}>
-              ✨ {item.enchant}
-            </p>
-          )}
-
-          {/* Trade type badge */}
           <span
             className="font-press-start text-[6px] px-2 py-1 border-2 inline-block self-start mt-1"
-            style={{ backgroundColor: tradeBg, color: tradeColor, borderColor: tradeBorder }}
+            style={{ backgroundColor: '#3a2e00', color: '#ffe860', borderColor: '#FFD700' }}
           >
-            {item.tradeType}
+            Barter
           </span>
         </div>
       </div>
 
-      {/* ── Detail rows ── */}
-      <div className="mc-detail-section-title">Details</div>
-
-      <div className="mc-detail-row">
-        <span className="mc-detail-label">💰 Cost</span>
-        <span className="font-press-start text-[8px]" style={{ color: '#FFD700' }}>
-          {item.cost}
-        </span>
+      {/* Offering section */}
+      <div className="mc-detail-section-title" style={{ color: '#8BC34A' }}>
+        📤 Offering
       </div>
+      {offering.length === 0 ? (
+        <p className="font-space-mono text-[9px] mb-4" style={{ color: '#8A6030' }}>Nothing specified</p>
+      ) : (
+        offering.map((li) => (
+          <div key={li.id} className="mc-detail-row">
+            <span className="mc-detail-label">{li.item?.name || 'Unknown item'}</span>
+            <span className="font-press-start text-[8px]" style={{ color: '#FFF0D0' }}>
+              x{li.quantity}
+            </span>
+          </div>
+        ))
+      )}
 
-      <div className="mc-detail-row">
-        <span className="mc-detail-label">📦 Stock</span>
-        <span className="font-press-start text-[8px]" style={{ color: '#FFF0D0' }}>
-          {item.qty} Available
-        </span>
+      {/* Wanting section */}
+      <div className="mc-detail-section-title mt-4" style={{ color: '#B388FF' }}>
+        📥 Wanting
       </div>
+      {wanting.length === 0 ? (
+        <p className="font-space-mono text-[9px]" style={{ color: '#8A6030' }}>Open trade (anything)</p>
+      ) : (
+        wanting.map((li) => (
+          <div key={li.id} className="mc-detail-row">
+            <span className="mc-detail-label">{li.item?.name || 'Unknown item'}</span>
+            <span className="font-press-start text-[8px]" style={{ color: '#FFF0D0' }}>
+              x{li.quantity}
+            </span>
+          </div>
+        ))
+      )}
 
-      <div className="mc-detail-row">
-        <span className="mc-detail-label">📅 Listed</span>
-        <span className="font-space-mono text-[9px]" style={{ color: '#E8C888' }}>
-          {item.listed}
-        </span>
-      </div>
+    </div>
+  );
+}
 
-      <div className="mc-detail-row">
-        <span className="mc-detail-label">⚗️ Enchant</span>
-        {isEnchanted ? (
-          <span className="font-space-mono text-[8px] leading-relaxed" style={{ color: '#B388FF' }}>
-            {item.enchant}
-          </span>
-        ) : (
-          <span className="font-space-mono text-[9px]" style={{ color: '#8A6030' }}>None</span>
-        )}
-      </div>
-
-      <div className="mc-detail-row">
-        <span className="mc-detail-label">👤 Seller</span>
-        <button className="mc-clickable-tag" style={{ fontSize: '9px', color: '#E8C888' }}>
-          {FILLER_STORE.owner}
-        </button>
-      </div>
-
-      <div className="mc-detail-row">
-        <span className="mc-detail-label">🌐 Server</span>
-        <button className="mc-clickable-tag" style={{ fontSize: '9px', color: '#E8C888' }}>
-          {FILLER_STORE.server}
-        </button>
-      </div>
-
-      {/* ── Notes ── */}
-      <div className="mc-detail-notes mt-4">
-        <p className="mc-detail-section-title" style={{ marginBottom: '8px' }}>Seller Notes</p>
-        <p className="font-space-mono text-[9px] leading-relaxed" style={{ color: '#E8C888' }}>
-          {item.notes}
-        </p>
-      </div>
-
+/* ── Loading skeleton ── */
+function LoadingState() {
+  return (
+    <div className="mc-store-right-empty">
+      <span style={{ fontSize: '48px', opacity: 0.35 }}>⛏️</span>
+      <p className="font-press-start text-[9px] text-green-400 mt-4" style={{ opacity: 0.6 }}>
+        Loading...
+      </p>
     </div>
   );
 }
 
 /* ── Store page ── */
 export default function StorePage() {
-  const [selectedItem, setSelectedItem] = useState(null);
+  const { id: storeId } = useParams();
+  const [store, setStore]           = useState(null);
+  const [listings, setListings]     = useState([]);
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
 
-  const handleSelect = (item) => {
-    // clicking the same item again deselects it
-    setSelectedItem((prev) => (prev?.id === item.id ? null : item));
+  useEffect(() => {
+    if (!storeId) return;
+
+    async function loadStore() {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) { setError('Not authenticated'); setLoading(false); return; }
+
+        // Fetch store details to get the server_id
+        const { data: storeData, error: storeErr } = await supabase
+          .from('user_stores')
+          .select('id, name, description, server_name, status, server_id, profiles!owner_id(username)')
+          .eq('id', storeId)
+          .single();
+
+        if (storeErr || !storeData) { setError('Store not found'); setLoading(false); return; }
+        setStore(storeData);
+
+        // Use the stores/[storeId]/items route to get listings
+        const res = await fetch(
+          `/api/v1/${storeData.server_id}/stores/${storeId}/items`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          setError(body.error || 'Failed to load listings');
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setListings(data.listings || []);
+      } catch (err) {
+        console.error('Failed to load store:', err);
+        setError('Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadStore();
+  }, [storeId]);
+
+  const handleSelect = (listing) => {
+    setSelectedListing((prev) => (prev?.id === listing.id ? null : listing));
   };
 
-  const { typeStyle, name, owner, server, type, status } = FILLER_STORE;
+  if (loading) {
+    return (
+      <div className="mc-store-layout">
+        <div className="mc-store-left">
+          <LoadingState />
+        </div>
+        <div className="mc-store-right">
+          <LoadingState />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mc-store-layout">
+        <div className="mc-store-left" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <span style={{ fontSize: '48px' }}>⚠️</span>
+            <p className="font-press-start text-[9px] mt-4" style={{ color: '#ff8888' }}>{error}</p>
+          </div>
+        </div>
+        <div className="mc-store-right" />
+      </div>
+    );
+  }
 
   return (
     <div className="mc-store-layout">
@@ -294,63 +232,45 @@ export default function StorePage() {
 
         {/* ── Store header ── */}
         <div className="mc-store-header">
-          {/* Grass stripe accent */}
           <div className="mc-store-header-accent" />
-
           <div className="mc-store-header-body">
             <div className="flex items-start gap-4">
 
-              {/* Store type icon block */}
               <div
                 className="flex-shrink-0 w-14 h-14 flex items-center justify-center"
                 style={{
-                  backgroundColor: typeStyle.bg,
+                  backgroundColor: '#3a2e00',
                   border: '3px solid #000',
-                  boxShadow: '3px 3px 0 #000, inset -2px -2px 0 rgba(0,0,0,0.3), inset 2px 2px 0 rgba(255,255,255,0.1)',
-                  imageRendering: 'pixelated',
+                  boxShadow: '3px 3px 0 #000, inset -2px -2px 0 rgba(0,0,0,0.3)',
                 }}
               >
-                <span style={{ fontSize: '26px' }}>{typeStyle.icon}</span>
+                <span style={{ fontSize: '26px' }}>💰</span>
               </div>
 
-              {/* Store info */}
               <div className="flex-1 min-w-0">
                 <h1 className="font-press-start text-[11px] leading-relaxed mb-2" style={{ color: '#FFF0D0' }}>
-                  {name}
+                  {store?.name || store?.description || 'Unnamed Store'}
                 </h1>
 
-                {/* Owner + server — clickable */}
                 <div className="flex items-center gap-2 flex-wrap mb-3">
                   <button className="mc-clickable-tag" style={{ fontSize: '9px' }}>
-                    👤 {owner}
+                    👤 {store?.profiles?.username || 'Unknown'}
                   </button>
                   <span style={{ color: '#5A3A14', fontFamily: 'Space Mono', fontSize: '9px' }}>•</span>
                   <button className="mc-clickable-tag" style={{ fontSize: '9px' }}>
-                    🌐 {server}
+                    🌐 {store?.server_name || 'Unknown Server'}
                   </button>
                 </div>
 
-                {/* Badges row */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Type badge */}
-                  <span
-                    className="font-press-start text-[6px] px-2 py-1 border-2 inline-block"
-                    style={{ backgroundColor: typeStyle.bg, color: typeStyle.text, borderColor: typeStyle.accent }}
-                  >
-                    {type}
-                  </span>
-
-                  {/* Status badge */}
                   <span
                     className="font-press-start text-[6px] px-2 py-1 border-2 inline-block"
                     style={{ backgroundColor: '#0f2d00', color: '#7BC63A', borderColor: '#5D8A2C' }}
                   >
-                    ● {status}
+                    ● {store?.status || 'active'}
                   </span>
-
-                  {/* Item count */}
                   <span className="font-space-mono text-[9px]" style={{ color: '#C4904A' }}>
-                    📦 {FILLER_ITEMS.length} items
+                    📦 {listings.length} listings
                   </span>
                 </div>
               </div>
@@ -358,16 +278,22 @@ export default function StorePage() {
           </div>
         </div>
 
-        {/* ── Scrollable item list ── */}
+        {/* ── Scrollable listing list ── */}
         <div className="mc-store-items-scroll">
-          {FILLER_ITEMS.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              selected={selectedItem?.id === item.id}
-              onSelect={handleSelect}
-            />
-          ))}
+          {listings.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <p className="font-space-mono text-[9px]" style={{ color: '#8A6030' }}>No listings yet</p>
+            </div>
+          ) : (
+            listings.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                selected={selectedListing?.id === listing.id}
+                onSelect={handleSelect}
+              />
+            ))
+          )}
         </div>
       </div>
 
@@ -375,22 +301,19 @@ export default function StorePage() {
           RIGHT HALF
       ════════════════════════════════ */}
       <div className="mc-store-right">
-
-        {/* Right panel header */}
         <div className="mc-store-right-header">
           <span className="font-press-start text-[8px] text-green-400">
-            {selectedItem ? '📋 Item Details' : '📋 Browse Items'}
+            {selectedListing ? '📋 Trade Details' : '📋 Browse Listings'}
           </span>
-          {selectedItem && (
+          {selectedListing && (
             <span className="font-space-mono text-[9px] ml-2" style={{ color: '#C4904A' }}>
-              — {selectedItem.name}
+              — Listing #{selectedListing.id.slice(0, 8)}
             </span>
           )}
         </div>
 
-        {/* Content */}
-        {selectedItem
-          ? <ItemDetail item={selectedItem} />
+        {selectedListing
+          ? <ListingDetail listing={selectedListing} />
           : <EmptyDetail />
         }
       </div>
