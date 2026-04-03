@@ -3,7 +3,7 @@ import HomeBaseForm from "../components/HomeBaseForm";
 
 export default function HomePage() {
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="page-container">
       <HomeBaseForm />
     </div>
   );

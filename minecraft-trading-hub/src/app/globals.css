@@ -31,7 +31,7 @@
   }
 
   .heading-pixel {
-    @apply text-xl md:text-2xl text-green-800 uppercase leading-normal;
+    @apply text-xl md:text-2xl text-[#8fca5c] uppercase leading-normal;
     @apply font-press-start;
   }
 
@@ -75,5 +75,17 @@
 
   .dashboard-container {
     @apply flex flex-col justify-center items-center min-h-screen gap-8 bg-gray-50 p-6;
+  }
+
+  .profile-layout {
+    @apply bg-gradient-to-b from-[#3f360f] via-[#654219] to-[#3f270d];
+  }
+
+  .profile-wrapper {
+    @apply p-4 bg-transparent;
+  }
+
+  .inventory-card {
+    @apply bg-[#5e3f20] border border-[#af8b54] rounded-xl;
   }
 }
