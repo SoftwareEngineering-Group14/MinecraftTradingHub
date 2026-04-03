@@ -182,7 +182,6 @@ export default function ProfileForm() {
     try {
       const payload = {
         id: userId,
-        username: username.trim(),
         interests: interests,
       };
 
@@ -191,8 +190,6 @@ export default function ProfileForm() {
         .upsert(payload, { onConflict: 'id', returning: 'representation' });
 
       if (updateError) throw updateError;
-
-      await supabase.auth.updateUser({ data: { username: username.trim() } });
 
       setSuccess('Profile saved successfully.');
       setIsEditing(false);
@@ -215,7 +212,7 @@ export default function ProfileForm() {
         {/* AVATAR BLOCK */}
         <div className="relative group cursor-pointer">
           <img
-            src={avatarUrl || '/avatar-placeholder.png'}
+            src={avatarUrl || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=fallback'}
             alt="avatar"
             className="w-full h-40 object-cover rounded-2xl border-4 border-[#d8c9a3] group-hover:opacity-75 transition-opacity"
             onClick={() => document.getElementById('avatar-upload').click()}
@@ -299,16 +296,9 @@ export default function ProfileForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block"> 
                 <span className="text-xs uppercase text-[#43312a] font-bold">Username</span>
-                {isEditing ? (
-                  <input
-                    className="mt-1 rounded-lg border border-[#b99f7d] p-2 w-full text-sm bg-white"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                ) : (
-                  <p className="mt-1 p-2 text-sm text-[#52331c] bg-[#e7d5b8]/50 rounded-lg">{username}</p>
-                )}
+                <p className="mt-1 p-2 text-sm text-[#52331c] bg-[#e7d5b8]/50 rounded-lg border border-dashed border-[#b99f7d]">
+                  {username} <span className="text-[9px] opacity-50 ml-1"></span>
+                </p>
               </label>
               <label className="block">
                 <span className="text-xs uppercase text-[#43312a] font-bold">Email</span>
