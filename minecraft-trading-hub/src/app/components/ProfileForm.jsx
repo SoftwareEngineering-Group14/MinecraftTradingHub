@@ -1,23 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react"
-
-import { useEffect, useState } from "react"
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
-
-//using createClient here instead of '../lib/supabaseClient' to avoid 'next/headers' issues
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-const MASTER_INTERESTS = ["Redstone", "PVP", "Building", "Farming", "Alchemy", "Trading", "Exploration", "Creative"];
-
-export const createClient = () => {
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
-};
-
-const supabase = createClient();
-
 import { createBrowserClient } from '@supabase/ssr';
 
 //using createClient here instead of '../lib/supabaseClient' to avoid 'next/headers' issues
@@ -35,24 +19,7 @@ const supabase = createClient();
 
 export default function ProfileForm() {
   const [uploading, setUploading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isDev, setIsDev] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  const [userId, setUserId] = useState(null);
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [interests, setInterests] = useState([]); 
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [memberSince, setMemberSince] = useState('');
-
-  const [userServers, setUserServers] = useState([]);
-  const [selectedServerId, setSelectedServerId] = useState(null);
-
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDev, setIsDev] = useState(false);
@@ -72,19 +39,12 @@ export default function ProfileForm() {
   const router = useRouter();
 
 
-
   useEffect(() => {
     async function getProfile() {
       setLoading(true);
       setError('');
 
-      setLoading(true);
-      setError('');
-
       try {
-        const { data: userData, error: authError } = await supabase.auth.getUser();
-        if (authError || !userData?.user) {
-          router.push('/signin');
         const { data: userData, error: authError } = await supabase.auth.getUser();
         if (authError || !userData?.user) {
           router.push('/signin');
@@ -143,61 +103,7 @@ export default function ProfileForm() {
           year: 'numeric'
         });
         setMemberSince(joinDate);
-        const user = userData.user;
-        setUserId(user.id);
-        setEmail(user.email || '');
-
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('username, name, is_developer, interests')
-          .eq('id', user.id)
-          .single();
-        setIsDev(profile?.is_developer || false);
-        setInterests(Array.isArray(profile?.interests) ? profile.interests : []);
-
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.warn('Profile fetch warning', profileError);
-        }
-        
-        const customPath = `${user.id}.png`;
-        const totalSkins = 10;
-        const idSum = user.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const skinNumber = (idSum % totalSkins) + 1;
-        const randomPath = `avatar_${skinNumber}.png`;
-
-        const { data: fileExists } = await supabase.storage
-          .from('avatars')
-          .list('', { search: customPath})
-
-        const finalPath = fileExists && fileExists.length > 0 ? customPath : randomPath;
-        
-        const { data: storageData } = supabase
-          .storage
-          .from('avatars')
-          .getPublicUrl(finalPath);
-
-        const backupAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${profile?.username || user.user_metadata?.username || 'New Player'}`;
-
-        setUsername(profile?.username || user.user_metadata?.username || 'New Player');
-        setAvatarUrl(`${storageData?.publicUrl}?t=${Date.now()}`);
-        // Fetch user's servers from user_stores table with server details
-        const { data: stores, error: storesError } = await supabase
-          .from('user_stores')
-          .select('id, server_id, servers(id, name)')
-          .eq('user_id', user.id);
-
-        if (!storesError && stores && stores.length > 0) {
-          setUserServers(stores);
-          setSelectedServerId(stores[0].server_id);
-        }
-        const joinDate = new Date(user.created_at).toLocaleDateString('en-US', {
-          month: 'long',
-          year: 'numeric'
-        });
-        setMemberSince(joinDate);
       } catch (err) {
-        console.error('Error fetching player profile:', err);
-        setError('Could not load profile. Please refresh.');
         console.error('Error fetching player profile:', err);
         setError('Could not load profile. Please refresh.');
       } finally {
