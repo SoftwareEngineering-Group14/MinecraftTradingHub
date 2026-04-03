@@ -66,22 +66,12 @@ export async function POST(request, { params }) {
 
     const { data: permission } = await supabase
       .from("server_permissions")
-      .select("is_member")
+      .select("can_read")
       .eq("server_id", serverId)
       .eq("user_id", user.id)
       .single();
 
-    let isMember = permission?.is_member;
-    if (!isMember) {
-      const { data: server } = await supabase
-        .from("servers")
-        .select("owner_id")
-        .eq("id", serverId)
-        .single();
-      isMember = server?.owner_id === user.id;
-    }
-
-    if (!isMember) {
+    if (!permission?.can_read) {
       return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
     }
 

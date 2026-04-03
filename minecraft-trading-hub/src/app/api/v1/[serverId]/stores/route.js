@@ -24,24 +24,15 @@ const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
 const allowedMethods = "GET, POST, OPTIONS";
 const allowedHeaders = "Content-Type, Authorization";
 
-async function requireMember(supabase, serverId, userId, headers) {
+async function requireReadPermission(supabase, serverId, userId, headers) {
   const { data: permission } = await supabase
     .from("server_permissions")
-    .select("is_member, is_admin")
+    .select("can_read")
     .eq("server_id", serverId)
     .eq("user_id", userId)
     .single();
 
-  if (!permission?.is_member) {
-    // Fallback: server owner counts as admin member even with no permission row
-    const { data: server } = await supabase
-      .from("servers")
-      .select("owner_id")
-      .eq("id", serverId)
-      .single();
-    if (server?.owner_id === userId) {
-      return { is_member: true, is_admin: true };
-    }
+  if (!permission?.can_read) {
     return NextResponse.json(
       { error: "User does not have correct permissions" },
       { status: STATUS_FORBIDDEN, headers }
@@ -87,7 +78,7 @@ export async function GET(request, { params }) {
 
     const { serverId } = await params;
 
-    const permOrError = await requireMember(supabase, serverId, user.id, headers);
+    const permOrError = await requireReadPermission(supabase, serverId, user.id, headers);
     if (permOrError instanceof NextResponse) return permOrError;
 
     let limit = 10;
@@ -141,7 +132,7 @@ export async function POST(request, { params }) {
 
     const { serverId } = await params;
 
-    const permOrError = await requireMember(supabase, serverId, user.id, headers);
+    const permOrError = await requireReadPermission(supabase, serverId, user.id, headers);
     if (permOrError instanceof NextResponse) return permOrError;
 
     const body = await request.json().catch(() => ({}));
