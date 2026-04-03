@@ -8,8 +8,26 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
+# [Version: 1.0.11]
+# [PR: 49] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/49]
+- Added Discord Bot webhook creation and workflow actions to send incoming messages related to github PR's
+
+-------------------------------------------------------------------------------
+# [Version: 1.0.10]
+# [PR: 52] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/52]
+- Changed user app-wide role from string to bolean "is_developer"
+
+-------------------------------------------------------------------------------
+# [Version: 1.0.9]
+# [PR: 45] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/45]
+- Updated API route from supabaseclient to server side for both username and interests (onboarding)
+- Fixed Incursion Loop Error when username is registered
+- Fixed Page direction after signup to Dashboard Home (Previously gave 404 error due to incorrect name convention)
+- Included home Folder as part of proxy
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.8]
-# [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/43]
+# [PR: 43] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/43]
 - Reorganized the app directory into a clean, modular hierarchy for better scalability and Turbopack compatibility.
 - Implemented separate supabaseServer and supabaseClient utilities to prevent environment-specific crashes during build and runtime.
 - Added initial routing logic to handle protected vs. public pages efficiently.

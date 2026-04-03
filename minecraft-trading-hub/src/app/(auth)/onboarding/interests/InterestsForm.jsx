@@ -29,7 +29,7 @@ export default function InterestsForm() {
 
       if (!res.ok) throw new Error(data.error || 'Failed to save interests');
 
-      router.push('/dashboard');
+      router.push('/home/dashboard');
     } catch (err) {
       console.error("Onboarding Error:", err.message);
       alert(err.message);

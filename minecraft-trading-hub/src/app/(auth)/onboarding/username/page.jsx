@@ -7,7 +7,7 @@ export default async function UsernamePage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect('/signin');
   }
 
   if (user.user_metadata?.username) {

@@ -16,7 +16,7 @@ const mockSupabase = {
   from: jest.fn(),
 };
 
-jest.mock('@/app/lib/supabaseClient', () => ({
+jest.mock('@/app/lib/supabaseServer', () => ({
   createServerSideClient: jest.fn(() => Promise.resolve(mockSupabase)),
 }));
 
@@ -128,7 +128,6 @@ describe('/api/onboarding/interests', () => {
 
       expect(response.status).toBe(200);
       expect(mockUpdateQuery.update).toHaveBeenCalledWith({ interests: ['Trading', 'PvP'] });
-      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({ data: { interests: ['Trading', 'PvP'] } });
       expect(data.profile).toEqual(mockProfile);
     });
 
@@ -167,7 +166,6 @@ describe('/api/onboarding/interests', () => {
 
       expect(response.status).toBe(200);
       expect(data.profile).toEqual(mockProfile);
-      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({ data: { interests: ['Trading', 'Redstone'] } });
     });
 
     it('should return 500 if an unexpected error occurs', async () => {

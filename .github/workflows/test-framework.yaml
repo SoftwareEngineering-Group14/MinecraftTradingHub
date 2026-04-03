@@ -1,0 +1,76 @@
+name: Run Tests & Get Test Coverage
+
+on:
+    push:
+        branches:
+            - "*"
+    pull_request:
+
+env:
+    DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+jobs:
+    test-framework:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./minecraft-trading-hub
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Set up Node
+              uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+              with:
+                  node-version: '24'
+
+            - name: Install dependencies
+              id: install
+              run: npm ci
+
+            - name: Run tests and collect coverage
+              id: test
+              shell: bash
+              run: |
+                  set -o pipefail
+                  npm test -- --coverage 2>&1 | tee coverage-output.txt
+
+            - name: Notify Discord (success)
+              if: success() && github.ref == 'refs/heads/main'
+              run: |
+                  COVERAGE_LINE=$(grep "All files" coverage-output.txt)
+                  STMTS=$(echo "$COVERAGE_LINE" | awk -F'|' '{print $2}' | tr -d ' ')
+                  BRANCH=$(echo "$COVERAGE_LINE" | awk -F'|' '{print $3}' | tr -d ' ')
+                  FUNCS=$(echo "$COVERAGE_LINE" | awk -F'|' '{print $4}' | tr -d ' ')
+                  LINES=$(echo "$COVERAGE_LINE" | awk -F'|' '{print $5}' | tr -d ' ')
+
+                  jq -n \
+                    --arg ref "${{ github.ref_name }}" \
+                    --arg sha "${{ github.sha }}" \
+                    --arg actor "${{ github.actor }}" \
+                    --arg stmts "$STMTS" \
+                    --arg branch "$BRANCH" \
+                    --arg funcs "$FUNCS" \
+                    --arg lines "$LINES" \
+                    '{content: ("✅ Tests passed on **" + $ref + "** — `" + $sha + "` by " + $actor + "\n\n**Coverage**\n```\nStatements  " + $stmts + "%\nBranches    " + $branch + "%\nFunctions   " + $funcs + "%\nLines       " + $lines + "%\n```")}' | \
+                  curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+                    -H "Content-Type: application/json" \
+                    --data-binary @-
+
+            - name: Notify Discord (failure)
+              if: failure() && github.ref == 'refs/heads/main'
+              run: |
+                  FAILED_STEP="${{ steps.install.conclusion == 'failure' && 'Install dependencies' || 'Run tests and collect coverage' }}"
+
+                  jq -n \
+                    --arg ref "${{ github.ref_name }}" \
+                    --arg sha "${{ github.sha }}" \
+                    --arg actor "${{ github.actor }}" \
+                    --arg repo "${{ github.repository }}" \
+                    --arg run_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+                    --arg event "${{ github.event_name }}" \
+                    --arg step "$FAILED_STEP" \
+                    '{content: ("❌ **CI failed** on **" + $ref + "**\n\n**Commit:** `" + $sha + "`\n**Author:** " + $actor + "\n**Repo:** " + $repo + "\n**Trigger:** " + $event + "\n**Failed step:** " + $step + "\n\n🔗 [View run](" + $run_url + ")")}' | \
+                  curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+                    -H "Content-Type: application/json" \
+                    --data-binary @-
