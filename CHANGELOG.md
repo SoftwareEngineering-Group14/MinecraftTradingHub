@@ -8,6 +8,11 @@ Copy and paste the following lines and state the changes before merging each com
 - Enter Change Details Here!
 
 -------------------------------------------------------------------------------
+# [Version: 1.0.11]
+# [PR: ??] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/]
+- Implemented profile image select
+
+-------------------------------------------------------------------------------
 # [Version: 1.0.8]
 # [PR: 42] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/43]
 - Reorganized the app directory into a clean, modular hierarchy for better scalability and Turbopack compatibility.
