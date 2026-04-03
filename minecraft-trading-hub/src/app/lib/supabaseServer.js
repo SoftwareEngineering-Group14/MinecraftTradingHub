@@ -31,3 +31,5 @@ export const createServerSideClient = async () => {
     },
   });
 };
+
+export const createClient = createServerSideClient;

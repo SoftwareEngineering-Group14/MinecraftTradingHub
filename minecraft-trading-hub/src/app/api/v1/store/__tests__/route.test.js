@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 import { GET, OPTIONS } from '../route';
-import { createServerSideClient } from '@/app/lib/supabaseClient';
+import { createAuthenticatedClient } from '@/app/lib/supabaseClient';
 
 // Mock the supabaseClient
 jest.mock('@/app/lib/supabaseClient', () => ({
-  createServerSideClient: jest.fn(),
+  createAuthenticatedClient: jest.fn(),
 }));
 
 // Mock serverFunctions
@@ -30,7 +30,7 @@ describe('/api/v1/store', () => {
       },
       from: jest.fn(),
     };
-    createServerSideClient.mockResolvedValue(mockSupabase);
+    createAuthenticatedClient.mockReturnValue(mockSupabase);
   });
 
   describe('OPTIONS', () => {
