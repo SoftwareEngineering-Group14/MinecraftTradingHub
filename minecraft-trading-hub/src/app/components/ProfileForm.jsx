@@ -22,6 +22,7 @@ export default function ProfileForm() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
 
   const [userServers, setUserServers] = useState([]);
   const [selectedServerId, setSelectedServerId] = useState(null);
@@ -48,7 +49,7 @@ export default function ProfileForm() {
         // fetch profile row from profiles table
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('username, full_name, bio, avatar_url')
+          .select('username, avatar_link')
           .eq('id', user.id)
           .single();
 
@@ -57,7 +58,16 @@ export default function ProfileForm() {
         }
 
         setUsername(profile?.username || user.user_metadata?.username || 'New Player');
-        setAvatarUrl(profile?.avatar_url || `/minecraft-avatars/${encodeURIComponent(user.id)}.png`);
+
+        let resolvedAvatarUrl = '/avatar-placeholder.png';
+        if (profile?.avatar_link) {
+          const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(profile.avatar_link);
+          resolvedAvatarUrl = publicUrlData?.publicUrl || '/avatar-placeholder.png';
+        }
+
+        setAvatarUrl(resolvedAvatarUrl);
 
         // Fetch user's servers from user_stores table with server details
         const { data: stores, error: storesError } = await supabase
@@ -93,10 +103,39 @@ export default function ProfileForm() {
     setSaving(true);
 
     try {
+      let avatar_link = null;
+
+      if (avatarFile && userId) {
+        const fileExt = avatarFile.name.includes('.') ? avatarFile.name.substring(avatarFile.name.lastIndexOf('.')) : '';
+        const fileName = `${userId}/${Date.now()}${fileExt}`;
+
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('avatars')
+          .upload(fileName, avatarFile, { upsert: true });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        avatar_link = uploadData?.path || fileName;
+
+        const { data: publicUrlData } = supabase
+          .storage
+          .from('avatars')
+          .getPublicUrl(avatar_link);
+
+        if (publicUrlData?.publicUrl) {
+          setAvatarUrl(publicUrlData.publicUrl);
+        }
+      }
+
       const payload = {
         id: userId,
         username: username.trim(),
       };
+
+      if (avatar_link) payload.avatar_link = avatar_link;
 
       const { error: updateError } = await supabase
         .from('profiles')
@@ -112,6 +151,14 @@ export default function ProfileForm() {
       setError('Could not save profile. Please try again later.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function handleAvatarFileChange(e) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarUrl(URL.createObjectURL(file));
     }
   }
 
@@ -183,6 +230,18 @@ export default function ProfileForm() {
                     type="email"
                     value={email}
                     readOnly
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <label className="block">
+                  <span className="text-xs uppercase text-[#43312a]">Profile Image</span>
+                  <input
+                    className="mt-1 rounded-lg border border-[#b99f7d] p-2 w-full text-sm bg-white/80"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarFileChange}
                   />
                 </label>
               </div>
