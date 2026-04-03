@@ -263,7 +263,6 @@ export default function ProfileForm() {
     try {
       const payload = {
         id: userId,
-        username: username.trim(),
         interests: interests,
       };
 
@@ -272,8 +271,6 @@ export default function ProfileForm() {
         .upsert(payload, { onConflict: 'id', returning: 'representation' });
 
       if (updateError) throw updateError;
-
-      await supabase.auth.updateUser({ data: { username: username.trim() } });
 
       setSuccess('Profile saved successfully.');
       setIsEditing(false);
@@ -298,7 +295,7 @@ export default function ProfileForm() {
         {/* AVATAR BLOCK */}
         <div className="relative group cursor-pointer">
           <img
-            src={avatarUrl || '/avatar-placeholder.png'}
+            src={avatarUrl || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=fallback'}
             alt="avatar"
             className="w-full h-40 object-cover rounded-2xl border-4 border-[#d8c9a3] group-hover:opacity-75 transition-opacity"
             onClick={() => document.getElementById('avatar-upload').click()}
@@ -391,20 +388,19 @@ export default function ProfileForm() {
             ))}
           </div>
 
-          {/* Account Settings tab */}
-          {activeTab === 'settings' && (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold tracking-wide text-[#52331c]">Account Settings</h2>
-                {!isEditing && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="text-xs bg-[#6b3f10] text-[#f3e1b8] px-3 py-1 rounded-full font-bold hover:bg-[#4f310e] transition"
-                  >
-                    Edit Profile
-                  </button>
-                )}
-              </div>
+          <form onSubmit={saveProfile} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="block"> 
+                <span className="text-xs uppercase text-[#43312a] font-bold">Username</span>
+                <p className="mt-1 p-2 text-sm text-[#52331c] bg-[#e7d5b8]/50 rounded-lg border border-dashed border-[#b99f7d]">
+                  {username} <span className="text-[9px] opacity-50 ml-1"></span>
+                </p>
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase text-[#43312a] font-bold">Email</span>
+                <p className="mt-1 p-2 text-sm text-[#7d5a3c] bg-white/30 rounded-lg italic">{email}</p>
+              </label>
+            </div>
 
               <form onSubmit={saveProfile} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
