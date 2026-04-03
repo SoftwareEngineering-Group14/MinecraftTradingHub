@@ -9,7 +9,7 @@ Copy and paste the following lines and state the changes before merging each com
 
 -------------------------------------------------------------------------------
 # [Version: 1.0.11]
-# [PR: ??] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/]
+# [PR: 57] : [https://github.com/SoftwareEngineering-Group14/MinecraftTradingHub/pull/57]
 - Implemented profile image select
 
 -------------------------------------------------------------------------------
