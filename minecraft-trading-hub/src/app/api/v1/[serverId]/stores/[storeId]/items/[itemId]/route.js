@@ -17,7 +17,7 @@ import {
 } from "@/app/lib/serverConstants";
 
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
-const allowedMethods = "GET, OPTIONS";
+const allowedMethods = "GET, DELETE, OPTIONS";
 const allowedHeaders = "Content-Type, Authorization";
 
 export async function OPTIONS(request) {
@@ -94,6 +94,41 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ listing }, { status: STATUS_OK, headers });
   } catch (error) {
+    return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+  }
+}
+
+export async function DELETE(request, { params }) {
+  const origin = request.headers.get(HEADER_ORIGIN) || "";
+  const headers = corsHeaders(origin, allowedOrigins, allowedMethods, allowedHeaders);
+  try {
+    const authHeader = request.headers.get(HEADER_AUTHORIZATION);
+    if (!authHeader?.startsWith(AUTH_BEARER_PREFIX)) {
+      return NextResponse.json({ error: ERROR_UNAUTHORIZED }, { status: STATUS_UNAUTHORIZED, headers });
+    }
+    const token = authHeader.substring(AUTH_BEARER_PREFIX.length);
+    const supabase = createAuthenticatedClient(token);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return NextResponse.json({ error: ERROR_UNAUTHORIZED }, { status: STATUS_UNAUTHORIZED, headers });
+
+    const { data: profile } = await supabase.from("profiles").select("is_developer").eq("id", user.id).single();
+    if (!profile?.is_developer) return NextResponse.json({ error: "Admin access required" }, { status: STATUS_FORBIDDEN, headers });
+
+    const { serverId, storeId, itemId } = await params;
+
+    const { data: listing } = await supabase
+      .from("listings")
+      .select("id")
+      .eq("id", itemId)
+      .eq("store_id", storeId)
+      .single();
+    if (!listing) return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });
+
+    const { error: deleteError } = await supabase.from("listings").delete().eq("id", itemId);
+    if (deleteError) return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+
+    return NextResponse.json({ success: true }, { status: STATUS_OK, headers });
+  } catch {
     return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
   }
 }

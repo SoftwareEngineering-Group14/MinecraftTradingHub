@@ -49,7 +49,6 @@ export async function PATCH(request, { params }) {
 
     const { serverId, requestId } = await params;
 
-    // Must be a server admin or platform admin
     const { data: callerPerm } = await supabase
       .from("server_permissions")
       .select("is_admin")
@@ -59,11 +58,11 @@ export async function PATCH(request, { params }) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("is_developer")
       .eq("id", user.id)
       .single();
 
-    const isPlatformAdmin = profile?.role === "admin";
+    const isPlatformAdmin = profile?.is_developer === true;
     const isServerAdmin = callerPerm?.is_admin === true;
 
     if (!isPlatformAdmin && !isServerAdmin) {
@@ -80,37 +79,45 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Verify the request exists and belongs to this server
     const { data: existing } = await supabase
       .from("server_permissions")
-      .select("id, status")
+      .select("id, is_member")
       .eq("id", requestId)
       .eq("server_id", serverId)
-      .eq("status", "pending")
+      .eq("is_member", false)
       .single();
 
     if (!existing) {
       return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });
     }
 
-    const update =
-      action === "approve"
-        ? { is_member: true, status: "approved" }
-        : { is_member: false, status: "rejected" };
+    if (action === "approve") {
+      const { data: updated, error: updateError } = await supabase
+        .from("server_permissions")
+        .update({ is_member: true })
+        .eq("id", requestId)
+        .select()
+        .single();
 
-    const { data: updated, error: updateError } = await supabase
-      .from("server_permissions")
-      .update(update)
-      .eq("id", requestId)
-      .select()
-      .single();
+      if (updateError) {
+        console.error("Update error:", updateError);
+        return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+      }
 
-    if (updateError) {
-      console.error("Update error:", updateError);
-      return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+      return NextResponse.json({ permission: updated }, { status: STATUS_OK, headers });
+    } else {
+      const { error: deleteError } = await supabase
+        .from("server_permissions")
+        .delete()
+        .eq("id", requestId);
+
+      if (deleteError) {
+        console.error("Delete error:", deleteError);
+        return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+      }
+
+      return NextResponse.json({ success: true }, { status: STATUS_OK, headers });
     }
-
-    return NextResponse.json({ permission: updated }, { status: STATUS_OK, headers });
   } catch (error) {
     return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
   }

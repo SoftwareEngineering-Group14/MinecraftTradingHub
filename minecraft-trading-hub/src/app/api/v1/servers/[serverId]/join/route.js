@@ -48,7 +48,6 @@ export async function POST(request, { params }) {
 
     const { serverId } = await params;
 
-    // Verify server exists and is not deleted
     const { data: server, error: serverError } = await supabase
       .from("servers")
       .select("id")
@@ -60,10 +59,9 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });
     }
 
-    // Check if a permission record already exists
     const { data: existing } = await supabase
       .from("server_permissions")
-      .select("id, is_member, status")
+      .select("id, is_member")
       .eq("server_id", serverId)
       .eq("user_id", user.id)
       .single();
@@ -72,27 +70,12 @@ export async function POST(request, { params }) {
       if (existing.is_member) {
         return NextResponse.json({ error: "Already a member of this server" }, { status: STATUS_CONFLICT, headers });
       }
-      if (existing.status === "pending") {
-        return NextResponse.json({ error: "Join request already pending" }, { status: STATUS_CONFLICT, headers });
-      }
-      // Rejected — allow re-request by updating the existing record
-      const { data: updated, error: updateError } = await supabase
-        .from("server_permissions")
-        .update({ status: "pending", is_member: false })
-        .eq("id", existing.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
-      }
-      return NextResponse.json({ permission: updated }, { status: STATUS_OK, headers });
+      return NextResponse.json({ error: "Join request already pending" }, { status: STATUS_CONFLICT, headers });
     }
 
-    // Create new pending join request
     const { data: permission, error: insertError } = await supabase
       .from("server_permissions")
-      .insert({ server_id: serverId, user_id: user.id, is_member: false, is_admin: false, status: "pending" })
+      .insert({ server_id: serverId, user_id: user.id, is_member: false, is_admin: false })
       .select()
       .single();
 
