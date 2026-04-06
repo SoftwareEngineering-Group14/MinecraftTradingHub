@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
 import { corsHeaders } from "../../../../lib/serverFunctions";
-import { createAuthenticatedClient } from "../../../../lib/supabaseClient";
+import { createServerSideClient } from "../../../../lib/supabaseClient";
 import {
   STATUS_OK,
-  STATUS_CREATED,
   STATUS_BAD_REQUEST,
   STATUS_UNAUTHORIZED,
   STATUS_FORBIDDEN,
-  STATUS_NOT_FOUND,
   STATUS_INTERNAL_SERVER_ERROR,
   ERROR_UNAUTHORIZED,
   ERROR_FORBIDDEN,
-  ERROR_NOT_FOUND,
   ERROR_INTERNAL_SERVER,
-  ERROR_MISSING_FIELDS,
   ALLOWED_ORIGINS_DEVELOPMENT,
   HEADER_ORIGIN,
   HEADER_AUTHORIZATION,
@@ -23,23 +19,6 @@ import {
 const allowedOrigins = ALLOWED_ORIGINS_DEVELOPMENT;
 const allowedMethods = "GET, POST, OPTIONS";
 const allowedHeaders = "Content-Type, Authorization";
-
-async function requireReadPermission(supabase, serverId, userId, headers) {
-  const { data: permission } = await supabase
-    .from("server_permissions")
-    .select("can_read")
-    .eq("server_id", serverId)
-    .eq("user_id", userId)
-    .single();
-
-  if (!permission?.can_read) {
-    return NextResponse.json(
-      { error: "User does not have correct permissions" },
-      { status: STATUS_FORBIDDEN, headers }
-    );
-  }
-  return permission;
-}
 
 export async function OPTIONS(request) {
   const origin = request.headers.get(HEADER_ORIGIN) || "";
@@ -57,13 +36,16 @@ export async function GET(request, { params }) {
     const authHeader = request.headers.get(HEADER_AUTHORIZATION);
     if (!authHeader || !authHeader.startsWith(AUTH_BEARER_PREFIX)) {
       return NextResponse.json(
-        { error: ERROR_UNAUTHORIZED },
-        { status: STATUS_UNAUTHORIZED, headers }
-      );
+        {
+          error: ERROR_UNAUTHORIZED
+        },
+        {
+          status: STATUS_UNAUTHORIZED, headers
+        });
     }
 
     const token = authHeader.substring(AUTH_BEARER_PREFIX.length);
-    const supabase = createAuthenticatedClient(token);
+    const supabase = await createServerSideClient();
     const {
       data: { user },
       error: authError
@@ -71,15 +53,29 @@ export async function GET(request, { params }) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: ERROR_UNAUTHORIZED },
-        { status: STATUS_UNAUTHORIZED, headers }
-      );
+        {
+          error: ERROR_UNAUTHORIZED
+        },
+        {
+          status: STATUS_UNAUTHORIZED, headers
+        });
     }
 
     const { serverId } = await params;
 
-    const permOrError = await requireReadPermission(supabase, serverId, user.id, headers);
-    if (permOrError instanceof NextResponse) return permOrError;
+    // Check the user has read access to this server
+    const { data: permission } = await supabase
+      .from("permissions")
+      .select("can_read")
+      .eq("entity_id", serverId)
+      .eq("user_id", user.id)
+      .single();
+
+    // Single returns null if no record is found, so we can use that to determine if the user has any permissions for this server
+    // If you user .can_read, that will throw an error if permission is null, which is why we use ?. to safely access it
+    if (!permission?.can_read) {
+      return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
+    }
 
     let limit = 10;
     const { searchParams } = new URL(request.url);
@@ -96,7 +92,7 @@ export async function GET(request, { params }) {
 
     const { data: stores, error } = await supabase
       .from("user_stores")
-      .select("id, name, server_name, description")
+      .select("id, server_name, description")
       .eq("server_id", serverId)
       .eq("status", "active")
       .limit(limit);
@@ -108,71 +104,12 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ stores }, { status: STATUS_OK, headers });
   } catch (error) {
-    return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
-  }
-}
-
-export async function POST(request, { params }) {
-  const origin = request.headers.get(HEADER_ORIGIN) || "";
-  const headers = corsHeaders(origin, allowedOrigins, allowedMethods, allowedHeaders);
-
-  try {
-    const authHeader = request.headers.get(HEADER_AUTHORIZATION);
-    if (!authHeader || !authHeader.startsWith(AUTH_BEARER_PREFIX)) {
-      return NextResponse.json({ error: ERROR_UNAUTHORIZED }, { status: STATUS_UNAUTHORIZED, headers });
-    }
-
-    const token = authHeader.substring(AUTH_BEARER_PREFIX.length);
-    const supabase = createAuthenticatedClient(token);
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json({ error: ERROR_UNAUTHORIZED }, { status: STATUS_UNAUTHORIZED, headers });
-    }
-
-    const { serverId } = await params;
-
-    const permOrError = await requireReadPermission(supabase, serverId, user.id, headers);
-    if (permOrError instanceof NextResponse) return permOrError;
-
-    const body = await request.json().catch(() => ({}));
-    const { name, description } = body;
-
-    if (!name || !name.trim()) {
-      return NextResponse.json({ error: ERROR_MISSING_FIELDS }, { status: STATUS_BAD_REQUEST, headers });
-    }
-
-    // Fetch server display_name for the denormalized server_name column
-    const { data: server, error: serverError } = await supabase
-      .from("servers")
-      .select("display_name")
-      .eq("id", serverId)
-      .single();
-
-    if (serverError || !server) {
-      return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });
-    }
-
-    const { data: store, error: insertError } = await supabase
-      .from("user_stores")
-      .insert({
-        server_id: serverId,
-        owner_id: user.id,
-        name: name.trim(),
-        description: description?.trim() || null,
-        server_name: server.display_name,
-        status: "active",
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error("Insert error:", insertError);
-      return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
-    }
-
-    return NextResponse.json({ store }, { status: STATUS_CREATED, headers });
-  } catch (error) {
-    return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+    return NextResponse.json(
+      {
+        error: ERROR_INTERNAL_SERVER,
+      },
+      {
+        status: STATUS_INTERNAL_SERVER_ERROR, headers
+      });
   }
 }

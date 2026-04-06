@@ -16,8 +16,8 @@ export default function DashboardPage() {
           </div>
           <div className="card flex-1">
             <h1 className="heading-pixel text-center">listings image here</h1>
-            <button className="green-button w-full text-center mt-auto"
-              onClick={() => router.push('/home/listings')}
+            <button className="green-button w-full text-center mt-auto" 
+              onClick={() => router.push('/home/stores')}
             >
               View Listings
             </button>
