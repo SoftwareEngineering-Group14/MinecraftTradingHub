@@ -86,7 +86,7 @@ export async function GET(request) {
     if (serverIds.length > 0) {
       const { data: perms } = await supabase
         .from("server_permissions")
-        .select("server_id, is_member, status, is_admin")
+        .select("server_id, is_member, is_admin")
         .eq("user_id", user.id)
         .in("server_id", serverIds);
 
@@ -98,7 +98,7 @@ export async function GET(request) {
     const result = (servers || []).map((s) => ({
       ...s,
       userPermission: permMap[s.id] || (s.owner_id === user.id
-        ? { is_member: true, is_admin: true, status: "approved" }
+        ? { is_member: true, is_admin: true }
         : null),
     }));
 
@@ -158,7 +158,6 @@ export async function POST(request) {
         user_id: user.id,
         is_member: true,
         is_admin: true,
-        status: "approved",
       });
 
     if (permError) {

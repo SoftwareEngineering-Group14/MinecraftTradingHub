@@ -38,7 +38,7 @@ async function requireReadPermission(supabase, serverId, userId, headers) {
       { status: STATUS_FORBIDDEN, headers }
     );
   }
-  return permission;
+  return { can_read: true };
 }
 
 export async function OPTIONS(request) {

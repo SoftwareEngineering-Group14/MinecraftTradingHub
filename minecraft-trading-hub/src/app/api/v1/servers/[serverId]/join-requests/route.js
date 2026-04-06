@@ -46,7 +46,6 @@ export async function GET(request, { params }) {
 
     const { serverId } = await params;
 
-    // Must be a server admin or platform admin
     const { data: callerPerm } = await supabase
       .from("server_permissions")
       .select("is_admin")
@@ -56,11 +55,11 @@ export async function GET(request, { params }) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("is_developer")
       .eq("id", user.id)
       .single();
 
-    const isPlatformAdmin = profile?.role === "admin";
+    const isPlatformAdmin = profile?.is_developer === true;
     const isServerAdmin = callerPerm?.is_admin === true;
 
     if (!isPlatformAdmin && !isServerAdmin) {
@@ -69,9 +68,9 @@ export async function GET(request, { params }) {
 
     const { data: requests, error } = await supabase
       .from("server_permissions")
-      .select("id, user_id, status, is_member, profiles!user_id(username, name)")
+      .select("id, user_id, is_member, profiles!user_id(username, name)")
       .eq("server_id", serverId)
-      .eq("status", "pending");
+      .eq("is_member", false);
 
     if (error) {
       console.error("Database error:", error);
