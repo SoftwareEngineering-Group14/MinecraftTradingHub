@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { corsHeaders } from "../../../../lib/serverFunctions";
-import { createServerSideClient } from "../../../../lib/supabaseClient";
+import { createAuthenticatedClient } from "../../../../lib/supabaseClient";
 import {
   STATUS_OK,
   STATUS_BAD_REQUEST,
@@ -46,7 +46,7 @@ export async function POST(request, { params }) {
     }
 
     const token = authHeader.substring(AUTH_BEARER_PREFIX.length);
-    const supabase = await createServerSideClient();
+    const supabase = createAuthenticatedClient(token);
     const {
       data: { user },
       error: authError
@@ -64,11 +64,10 @@ export async function POST(request, { params }) {
 
     const { serverId } = await params;
 
-    // Check the user has read access to this server
     const { data: permission } = await supabase
-      .from("permissions")
+      .from("server_permissions")
       .select("can_read")
-      .eq("entity_id", serverId)
+      .eq("server_id", serverId)
       .eq("user_id", user.id)
       .single();
 
