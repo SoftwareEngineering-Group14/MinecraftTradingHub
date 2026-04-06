@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { corsHeaders } from "../../../lib/serverFunctions";
-import { createAuthenticatedClient } from "../../../lib/supabaseClient";
+import { corsHeaders } from "../../../../lib/serverFunctions";
+import { createAuthenticatedClient } from "../../../../lib/supabaseClient";
 import {
   STATUS_OK,
   STATUS_BAD_REQUEST,

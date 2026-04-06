@@ -124,6 +124,8 @@ export async function DELETE(request, { params }) {
       .single();
     if (!listing) return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });
 
+    // Delete child listing_items first (FK constraint), then the listing
+    await supabase.from("listing_items").delete().eq("listing_id", itemId);
     const { error: deleteError } = await supabase.from("listings").delete().eq("id", itemId);
     if (deleteError) return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
 

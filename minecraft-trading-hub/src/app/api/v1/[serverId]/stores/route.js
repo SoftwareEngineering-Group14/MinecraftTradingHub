@@ -27,18 +27,28 @@ const allowedHeaders = "Content-Type, Authorization";
 async function requireReadPermission(supabase, serverId, userId, headers) {
   const { data: permission } = await supabase
     .from("server_permissions")
-    .select("can_read")
+    .select("is_member")
     .eq("server_id", serverId)
     .eq("user_id", userId)
     .single();
 
-  if (!permission?.can_read) {
+  let isMember = permission?.is_member;
+  if (!isMember) {
+    const { data: server } = await supabase
+      .from("servers")
+      .select("owner_id")
+      .eq("id", serverId)
+      .single();
+    isMember = server?.owner_id === userId;
+  }
+
+  if (!isMember) {
     return NextResponse.json(
       { error: "User does not have correct permissions" },
       { status: STATUS_FORBIDDEN, headers }
     );
   }
-  return permission;
+  return { is_member: true };
 }
 
 export async function OPTIONS(request) {
