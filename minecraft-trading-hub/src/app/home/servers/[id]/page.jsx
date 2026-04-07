@@ -143,7 +143,7 @@ export default function ServerPage() {
         setStoreName('');
         setStoreDesc('');
         if (data.store?.id) {
-          router.push(`/home/store/${data.store.id}`);
+          router.push(`/home/stores/${data.store.id}`);
         } else {
           await loadStores(token);
         }
@@ -260,7 +260,7 @@ export default function ServerPage() {
                 {stores.map((store) => (
                   <div
                     key={store.id}
-                    onClick={() => router.push(`/home/store/${store.id}`)}
+                    onClick={() => router.push(`/home/stores/${store.id}`)}
                     style={{
                       padding: '8px 12px',
                       background: '#8a5a2a',
