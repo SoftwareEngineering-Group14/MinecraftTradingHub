@@ -33,7 +33,6 @@ export default async function HomeLayout({ children }) {
         <div className="flex gap-4">
           <Link href="/home" className="hover:text-[#8fca5c] transition-colors">HUB</Link>
           <Link href="/home/profile" className="hover:text-[#8fca5c] transition-colors">PROFILE</Link>
-          <Link href="/home/dashboard" className="hover:text-[#8fca5c] transition-colors">DASHBOARD</Link>
 
         </div>
         

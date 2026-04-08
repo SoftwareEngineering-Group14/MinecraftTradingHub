@@ -6,9 +6,12 @@ import { Sign } from 'node:crypto';
 export default function HomePage() {
   return (
     <div className="page-container flex-col items-center justify-center">
-      <h1 className="hero-title">
-        Minecraft Trading Hub
-      </h1>
+      <div className="sign-card"
+      style={{ padding: '20px', marginBottom: '30px' }}>
+        <h1 className="hero-title">
+          Minecraft Trading Hub
+        </h1>
+      </div>
 
       <div className="card-container flex-row">
         <div className="card">

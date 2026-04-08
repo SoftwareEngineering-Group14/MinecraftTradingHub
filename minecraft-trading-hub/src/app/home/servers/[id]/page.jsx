@@ -178,154 +178,151 @@ export default function ServerPage() {
   }
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <div style={{ width: '100%', maxWidth: '800px', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="flex justify-center h-screen w-screen">
+      <div className= "h-full" style={{ width: '100%', maxWidth: '800px', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="green-button" onClick={() => router.push('/home')} style={{ fontSize: '9px', padding: '6px 12px' }}>
+          <button className="green-button" onClick={() => router.push('/home')} style={{ fontSize: '12px', padding: '6px 12px' }}>
             ← Back
           </button>
-          <h1 className="heading-pixel" style={{ fontSize: '12px', flex: 1 }}>{server.display_name}</h1>
+          <h1 className="heading-pixel" style={{ fontSize: '18px', flex: 1, padding: '20px 10px' }}>{server.display_name}</h1>
           <span style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px' }}>
             {server.mc_version ? `v${server.mc_version} · ` : ''}Owner: {server.profiles?.username || 'Unknown'}
           </span>
         </div>
 
-        {!isMember && !isPending && (
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
-            <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '10px' }}>
-              Join this server to browse and create stores.
-            </p>
-            <button className="green-button" onClick={handleJoin} disabled={joining} style={{ padding: '8px 16px', fontSize: '10px' }}>
-              {joining ? 'Sending...' : 'Request to Join'}
-            </button>
-          </div>
-        )}
+        <div className="card-container flex-row h-full w-full" style={{ alignItems: 'stretch', minHeight: '400px' }}>
+          {!isMember && !isPending && (
+            <div className="card h-full" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+              <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '12px' }}>
+                Join this server to browse and create stores.
+              </p>
+              <button className="green-button" onClick={handleJoin} disabled={joining} style={{ padding: '8px 16px', fontSize: '10px' }}>
+                {joining ? 'Sending...' : 'Request to Join'}
+              </button>
+            </div>
+          )}
 
-        {isPending && (
-          <div className="card">
-            <p style={{ color: '#f0c040', fontFamily: 'Space Mono', fontSize: '10px' }}>
-              ⏳ Join request pending — awaiting admin approval.
-            </p>
-          </div>
-        )}
+          {isPending && (
+            <div className="card">
+              <p style={{ color: '#f0c040', fontFamily: 'Space Mono', fontSize: '10px' }}>
+                ⏳ Join request pending — awaiting admin approval.
+              </p>
+            </div>
+          )}
 
-        {isMember && (
-          <div className="card-container flex-row" style={{ alignItems: 'stretch', minHeight: '400px' }}>
+          {isMember && (
+            <div className="card-container h-full" style={{
+              display: 'grid',
+              gridTemplateColumns: isAdmin ? '3fr 1fr' : '1fr',
+              gap: '12px',
+              minHeight: '400px',
+              height: '100%',
+              overflow: 'hidden',
+             }}>
 
-            <div className="card flex-1" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="card flex-1 w-full" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h2 className="heading-pixel" style={{ fontSize: '9px' }}>
                   Stores {!storesLoading && `(${stores.length})`}
                 </h2>
+                  
+
+                {showCreateStore && (
+                  <form onSubmit={handleCreateStore} style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '2px solid #61371f', paddingTop: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Store name *"
+                      value={storeName}
+                      onChange={(e) => setStoreName(e.target.value)}
+                      required
+                      style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none' }}
+                    />
+                    <textarea
+                      placeholder="Description (optional)"
+                      value={storeDesc}
+                      onChange={(e) => setStoreDesc(e.target.value)}
+                      rows={2}
+                      style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none', resize: 'none' }}
+                    />
+                    {createError && <p style={{ color: '#ff8888', fontFamily: 'Space Mono', fontSize: '9px' }}>{createError}</p>}
+                    <button className="green-button" type="submit" disabled={creating || !storeName.trim()} style={{ padding: '6px 10px', fontSize: '9px' }}>
+                      {creating ? 'Creating...' : 'Create Store'}
+                    </button>
+                  </form>
+                )}
+
+                {storesLoading && <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '10px' }}>Loading stores...</p>}
+                {!storesLoading && stores.length === 0 && !showCreateStore && (
+                  <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '10px' }}>No stores yet. Create one!</p>
+                )}
+
+                <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {stores.map((store) => (
+                    <div
+                      key={store.id}
+                      onClick={() => router.push(`/home/store/${store.id}`)}
+                      className="sign-card"
+                      style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '12px' }}>{store.name || 'Unnamed Store'}</p>
+                        {store.description && (
+                          <p style={{ color: "black", fontFamily: 'Space Mono', fontSize: '11px', marginTop: '3px' }}>
+                            {store.description.length > 50 ? store.description.slice(0, 48) + '…' : store.description}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        {isDev && (
+                          <button
+                            onClick={(e) => handleDeleteStore(e, store.id)}
+                            style={{ padding: '2px 7px', background: '#7a1c1c', border: '2px solid #5a0e0e', borderRadius: '4px', color: '#ffaaaa', fontFamily: 'Space Mono', fontSize: '11px', cursor: 'pointer', lineHeight: 1 }}
+                            title="Delete store"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 <button
-                  className="green-button"
-                  style={{ padding: '4px 10px', fontSize: '9px' }}
-                  onClick={() => setShowCreateStore((v) => !v)}
-                >
-                  {showCreateStore ? 'Cancel' : '+ Create'}
+                    className="green-button"
+                    style={{ padding: '4px 10px', fontSize: '9px' }}
+                    onClick={() => setShowCreateStore((v) => !v)}
+                  >
+                    {showCreateStore ? 'Cancel' : '+ Create'}
                 </button>
               </div>
 
-              {showCreateStore && (
-                <form onSubmit={handleCreateStore} style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '2px solid #61371f', paddingTop: '8px' }}>
-                  <input
-                    type="text"
-                    placeholder="Store name *"
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                    required
-                    style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none' }}
-                  />
-                  <textarea
-                    placeholder="Description (optional)"
-                    value={storeDesc}
-                    onChange={(e) => setStoreDesc(e.target.value)}
-                    rows={2}
-                    style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none', resize: 'none' }}
-                  />
-                  {createError && <p style={{ color: '#ff8888', fontFamily: 'Space Mono', fontSize: '9px' }}>{createError}</p>}
-                  <button className="green-button" type="submit" disabled={creating || !storeName.trim()} style={{ padding: '6px 10px', fontSize: '9px' }}>
-                    {creating ? 'Creating...' : 'Create Store'}
-                  </button>
-                </form>
-              )}
-
-              {storesLoading && <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '10px' }}>Loading stores...</p>}
-              {!storesLoading && stores.length === 0 && !showCreateStore && (
-                <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '10px' }}>No stores yet. Create one!</p>
-              )}
-
-              <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {stores.map((store) => (
-                  <div
-                    key={store.id}
-                    onClick={() => router.push(`/home/store/${store.id}`)}
-                    style={{
-                      padding: '8px 12px',
-                      background: '#8a5a2a',
-                      border: '2px solid #61371f',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px' }}>{store.name || 'Unnamed Store'}</p>
-                      {store.description && (
-                        <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px', marginTop: '3px' }}>
-                          {store.description.length > 50 ? store.description.slice(0, 48) + '…' : store.description}
-                        </p>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                      {isDev && (
-                        <button
-                          onClick={(e) => handleDeleteStore(e, store.id)}
-                          style={{ padding: '2px 7px', background: '#7a1c1c', border: '2px solid #5a0e0e', borderRadius: '4px', color: '#ffaaaa', fontFamily: 'Space Mono', fontSize: '11px', cursor: 'pointer', lineHeight: 1 }}
-                          title="Delete store"
-                        >
-                          ✕
-                        </button>
-                      )}
-                      <span style={{ color: '#8fca5c', fontFamily: 'Space Mono', fontSize: '12px' }}>▶</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {isAdmin && (
-              <div className="card flex-1" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <h2 className="heading-pixel" style={{ fontSize: '9px' }}>
-                  Join Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}
-                </h2>
-                {pendingRequests.length === 0 ? (
-                  <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '10px' }}>No pending requests.</p>
-                ) : (
-                  <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {pendingRequests.map((req) => (
-                      <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#5a3510', border: '2px solid #61371f', borderRadius: '4px' }}>
-                        <span style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px' }}>
-                          {req.profiles?.username || req.user_id?.slice(0, 8)}
-                        </span>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <button className="green-button" onClick={() => handleApprove(req.id)} style={{ padding: '3px 8px', fontSize: '9px' }}>✓</button>
-                          <button onClick={() => handleReject(req.id)} style={{ padding: '3px 8px', fontSize: '9px', background: '#8b2222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>✕</button>
+              {isAdmin && (
+                <div className="card flex-1" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <h2 className="heading-pixel" style={{ fontSize: '9px' }}>
+                    Join Requests {pendingRequests.length > 0 && `(${pendingRequests.length})`}
+                  </h2>
+                  {pendingRequests.length === 0 ? (
+                    <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '10px' }}>No pending requests.</p>
+                  ) : (
+                    <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {pendingRequests.map((req) => (
+                        <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#5a3510', border: '2px solid #61371f', borderRadius: '4px' }}>
+                          <span style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px' }}>
+                            {req.profiles?.username || req.user_id?.slice(0, 8)}
+                          </span>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button className="green-button" onClick={() => handleApprove(req.id)} style={{ padding: '3px 8px', fontSize: '9px' }}>✓</button>
+                            <button onClick={() => handleReject(req.id)} style={{ padding: '3px 8px', fontSize: '9px', background: '#8b2222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>✕</button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
-          </div>
-        )}
-
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

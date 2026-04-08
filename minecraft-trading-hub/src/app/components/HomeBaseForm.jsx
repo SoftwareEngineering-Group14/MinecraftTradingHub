@@ -89,39 +89,25 @@ export default function HomeBaseForm() {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <div className="card-container flex-row" style={{ width: '100%', maxWidth: '500px' }}>
+      <div className="card-container flex-row w-full flex gap-4" style={{ gap: '1rem' }}>
+        
         <div className="card flex-1" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1 className="heading-pixel" style={{ fontSize: '12px' }}>Servers</h1>
-            <button
-              className="green-button"
-              style={{ padding: '6px 12px', fontSize: '10px' }}
-              onClick={() => setShowCreateServer((v) => !v)}
-            >
-              {showCreateServer ? 'Cancel' : '+ New'}
-            </button>
-          </div>
-
+          <h1 className="heading-pixel" style={{ fontSize: '18px', padding: '0 0.5rem' }}>Servers</h1>
           <input
             type="text"
             placeholder="Search servers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ padding: '6px 10px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '6px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '11px', outline: 'none' }}
+            style={{ padding: '6px 10px', 
+              background: '#8a5a2a', 
+              border: '2px solid #61371f', 
+              borderRadius: '6px', 
+              color: '#fff', 
+              fontFamily: 'Space Mono, monospace', 
+              fontSize: '14px', 
+              outline: 'none' }}
           />
-
-          {showCreateServer && (
-            <form onSubmit={handleCreateServer} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '2px solid #61371f', paddingTop: '0.5rem' }}>
-              <input type="text" placeholder="Server name *" value={newServerName} onChange={(e) => setNewServerName(e.target.value)} required
-                style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none' }} />
-              <input type="text" placeholder="MC version (optional)" value={newServerVersion} onChange={(e) => setNewServerVersion(e.target.value)}
-                style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none' }} />
-              <button className="green-button" disabled={creating} style={{ padding: '6px 10px', fontSize: '10px' }}>
-                {creating ? 'Creating...' : 'Create Server'}
-              </button>
-            </form>
-          )}
 
           <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {loading && <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '11px' }}>Loading...</p>}
@@ -171,7 +157,31 @@ export default function HomeBaseForm() {
             })}
           </div>
 
+          <button
+              className="green-button"
+              style={{ padding: '6px 12px', fontSize: '10px' }}
+              onClick={() => setShowCreateServer((v) => !v)}
+            >
+              {showCreateServer ? 'Cancel' : '+ New'}
+          </button>
+
         </div>
+
+        {showCreateServer && (
+            <div className="card flex-1" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+              <h1 className="heading-pixel" style={{ fontSize: '12px', padding: '0 0.5rem' }}>Create Server</h1>
+              <form onSubmit={handleCreateServer} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '2px solid #61371f', paddingTop: '0.5rem' }}>
+                <input type="text" placeholder="Server name *" value={newServerName} onChange={(e) => setNewServerName(e.target.value)} required
+                  style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none' }} />
+                <input type="text" placeholder="MC version (optional)" value={newServerVersion} onChange={(e) => setNewServerVersion(e.target.value)}
+                  style={{ padding: '5px 8px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '4px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '10px', outline: 'none' }} />
+                <button className="green-button" disabled={creating} style={{ padding: '6px 10px', fontSize: '10px' }}>
+                  {creating ? 'Creating...' : 'Create Server'}
+                </button>
+              </form>
+            </div>
+          )}
+
       </div>
     </div>
   );

@@ -36,12 +36,13 @@
   }
 
   .hero-title {
-    @apply text-5xl md:text-7xl mb-4 bg-[url('/minecraft.png')] bg-clip-text text-transparent drop-shadow-lg;
+    @apply text-5xl md:text-6xl mb-4;
     @apply font-press-start;
-    -webkit-background-clip: text;
     line-height: 1.3;
     transform: scaleY(1.3);
     background-position: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   .auth-input {
