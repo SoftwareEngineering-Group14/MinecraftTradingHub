@@ -25,6 +25,14 @@ const allowedMethods = "GET, POST, OPTIONS";
 const allowedHeaders = "Content-Type, Authorization";
 
 async function requireReadPermission(supabase, serverId, userId, headers) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_developer")
+    .eq("id", userId)
+    .single();
+
+  if (profile?.is_developer) return { is_member: true };
+
   const { data: permission } = await supabase
     .from("server_permissions")
     .select("is_member")

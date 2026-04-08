@@ -50,25 +50,33 @@ export async function GET(request, { params }) {
 
     const { serverId, storeId } = await params;
 
-    const { data: permission } = await supabase
-      .from("server_permissions")
-      .select("is_member")
-      .eq("server_id", serverId)
-      .eq("user_id", user.id)
+    const { data: callerProfile } = await supabase
+      .from("profiles")
+      .select("is_developer")
+      .eq("id", user.id)
       .single();
 
-    let isMember = permission?.is_member;
-    if (!isMember) {
-      const { data: server } = await supabase
-        .from("servers")
-        .select("owner_id")
-        .eq("id", serverId)
+    if (!callerProfile?.is_developer) {
+      const { data: permission } = await supabase
+        .from("server_permissions")
+        .select("is_member")
+        .eq("server_id", serverId)
+        .eq("user_id", user.id)
         .single();
-      isMember = server?.owner_id === user.id;
-    }
 
-    if (!isMember) {
-      return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
+      let isMember = permission?.is_member;
+      if (!isMember) {
+        const { data: server } = await supabase
+          .from("servers")
+          .select("owner_id")
+          .eq("id", serverId)
+          .single();
+        isMember = server?.owner_id === user.id;
+      }
+
+      if (!isMember) {
+        return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
+      }
     }
 
     // Verify the store exists and belongs to this server
@@ -140,7 +148,10 @@ export async function POST(request, { params }) {
       const { data: server } = await supabase.from("servers").select("owner_id").eq("id", serverId).single();
       isMember = server?.owner_id === user.id;
     }
-    if (!isMember) return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
+
+    if (!isMember) {
+      return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
+    }
 
     const { data: store } = await supabase.from("user_stores").select("id").eq("id", storeId).eq("server_id", serverId).single();
     if (!store) return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });

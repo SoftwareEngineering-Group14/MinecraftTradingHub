@@ -52,6 +52,14 @@ function mockServerOwnerQuery({ owner_id = 'other-user' } = {}) {
   return { mockSelect };
 }
 
+// Caller profile: .from("profiles").select("is_developer").eq("id", userId).single()
+function mockCallerProfile({ is_developer = false } = {}) {
+  const mockSingle = jest.fn().mockResolvedValueOnce({ data: { is_developer }, error: null });
+  const mockEq = jest.fn().mockReturnValueOnce({ single: mockSingle });
+  const mockSelect = jest.fn().mockReturnValueOnce({ eq: mockEq });
+  return { mockSelect };
+}
+
 function makeRequest(url = BASE_URL, headers = DEFAULT_HEADERS) {
   return new NextRequest(url, { method: 'GET', headers });
 }
@@ -128,6 +136,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
 
     it('should return 403 if user lacks read permission', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: false });
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionForPost({ is_member: null });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
       // Owner fallback — user is not the owner
@@ -142,6 +152,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
 
     it('should return 400 if name is missing', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionForPost();
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
 
@@ -152,6 +164,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
 
     it('should return 400 if name is only whitespace', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionForPost();
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
 
@@ -161,6 +175,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
 
     it('should return 404 if server not found', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionForPost();
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
       // Permission passed; now the display_name server query fails
@@ -174,6 +190,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return 201 and create store successfully', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionForPost();
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
 
@@ -193,6 +211,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return 500 if insert fails', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionForPost();
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
 
@@ -239,6 +259,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return 403 if user has no permissions record for the server', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: false });
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionQuery({ is_member: null });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
       const { mockSelect: ownerSelect } = mockServerOwnerQuery({ owner_id: 'other-user' });
@@ -254,6 +276,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return 403 if user is not a member', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: false });
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionQuery({ is_member: false });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
       const { mockSelect: ownerSelect } = mockServerOwnerQuery({ owner_id: 'other-user' });
@@ -269,10 +293,12 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return active stores for a server the user is a member of', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
       const { mockSelect: permSelect } = mockPermissionQuery({ is_member: true });
       const { mockSelect: storesSelect, mockLimit } = mockStoresQuery();
 
       mockSupabase.from
+        .mockReturnValueOnce({ select: profileSelect })
         .mockReturnValueOnce({ select: permSelect })
         .mockReturnValueOnce({ select: storesSelect });
 
@@ -287,10 +313,12 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should use default limit of 10 when no limit param is provided', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
       const { mockSelect: permSelect } = mockPermissionQuery();
       const { mockSelect: storesSelect, mockLimit } = mockStoresQuery();
 
       mockSupabase.from
+        .mockReturnValueOnce({ select: profileSelect })
         .mockReturnValueOnce({ select: permSelect })
         .mockReturnValueOnce({ select: storesSelect });
 
@@ -302,10 +330,12 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should use custom limit when provided', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
       const { mockSelect: permSelect } = mockPermissionQuery();
       const { mockSelect: storesSelect, mockLimit } = mockStoresQuery();
 
       mockSupabase.from
+        .mockReturnValueOnce({ select: profileSelect })
         .mockReturnValueOnce({ select: permSelect })
         .mockReturnValueOnce({ select: storesSelect });
 
@@ -317,6 +347,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return 400 if limit is not a valid integer', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionQuery();
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
 
@@ -330,6 +362,8 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return 400 if limit is less than 1', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermissionQuery();
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
 
@@ -343,10 +377,12 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return 500 if the database query fails', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
       const { mockSelect: permSelect } = mockPermissionQuery();
       const { mockSelect: storesSelect } = mockStoresQuery({ data: null, error: { message: 'DB error' } });
 
       mockSupabase.from
+        .mockReturnValueOnce({ select: profileSelect })
         .mockReturnValueOnce({ select: permSelect })
         .mockReturnValueOnce({ select: storesSelect });
 
@@ -360,10 +396,12 @@ describe(`/api/v1/[serverId]/stores`, () => {
     it('should return an empty array if no active stores exist on the server', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
       const { mockSelect: permSelect } = mockPermissionQuery();
       const { mockSelect: storesSelect } = mockStoresQuery({ data: [] });
 
       mockSupabase.from
+        .mockReturnValueOnce({ select: profileSelect })
         .mockReturnValueOnce({ select: permSelect })
         .mockReturnValueOnce({ select: storesSelect });
 
@@ -372,6 +410,23 @@ describe(`/api/v1/[serverId]/stores`, () => {
 
       expect(response.status).toBe(200);
       expect(data.stores).toEqual([]);
+    });
+
+    it('platform admin bypasses membership check and sees all stores', async () => {
+      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: true });
+      const { mockSelect: storesSelect } = mockStoresQuery();
+
+      mockSupabase.from
+        .mockReturnValueOnce({ select: profileSelect })
+        .mockReturnValueOnce({ select: storesSelect });
+
+      const response = await GET(makeRequest(), { params: PARAMS });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.stores).toEqual(MOCK_STORES);
     });
   });
 });

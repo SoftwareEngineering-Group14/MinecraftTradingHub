@@ -15,7 +15,11 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        min-height: 100vh;
+        background-image: url('/dirt_texture.webp');
+        background-size: 240px auto;
+        background-repeat: repeat;
+        background-position: center;
         background-color: #854f2b;
     }
 
@@ -62,13 +66,16 @@
 
     /*header className="bg-gray-800 text-white p-4 flex justify-between items-center border-b border-gray-700"*/
     .header{
-        background-color: #477a1e;
+        background-image: url('/grass_texture.webp');
+        background-size: 240px auto;
+        background-repeat: repeat;
+        background-position: center;
         color: white;
         padding: 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #3e6b17;
+        border-bottom: 1px solid rgba(0,0,0,0.2);
     }
 
     .green-button {

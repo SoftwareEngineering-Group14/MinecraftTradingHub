@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -14,5 +15,15 @@ export const createAuthenticatedClient = (token) => {
     global: {
       headers: { Authorization: `Bearer ${token}` },
     },
+  });
+};
+
+// For server-side API routes that need to bypass RLS (admin operations).
+// Requires SUPABASE_SERVICE_ROLE_KEY in environment (server-only, never NEXT_PUBLIC_).
+export const createAdminClient = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+  return createSupabaseClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 };

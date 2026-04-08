@@ -88,15 +88,15 @@ export default function HomeBaseForm() {
   }
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <div className="card-container flex-row" style={{ width: '100%', maxWidth: '500px' }}>
-        <div className="card flex-1" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+    <div className="flex justify-center items-center min-h-screen px-6">
+      <div className="card-container flex-row" style={{ width: '100%', maxWidth: 'min(1400px, 98vw)', height: 'min(95vh, 100%)', padding: '1.5rem' }}>
+        <div className="card flex-1" style={{ width: '100%', maxHeight: '100%', minHeight: '70vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '1.25rem', padding: '2rem' }}>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1 className="heading-pixel" style={{ fontSize: '12px' }}>Servers</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <h1 className="heading-pixel" style={{ fontSize: '24px' }}>Servers</h1>
             <button
               className="green-button"
-              style={{ padding: '6px 12px', fontSize: '10px' }}
+              style={{ padding: '10px 18px', fontSize: '14px' }}
               onClick={() => setShowCreateServer((v) => !v)}
             >
               {showCreateServer ? 'Cancel' : '+ New'}
@@ -108,7 +108,7 @@ export default function HomeBaseForm() {
             placeholder="Search servers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ padding: '6px 10px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '6px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '11px', outline: 'none' }}
+            style={{ width: '100%', padding: '14px 16px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '12px', color: '#fff', fontFamily: 'Space Mono, monospace', fontSize: '15px', outline: 'none' }}
           />
 
           {showCreateServer && (
@@ -123,7 +123,7 @@ export default function HomeBaseForm() {
             </form>
           )}
 
-          <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {loading && <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '11px' }}>Loading...</p>}
             {!loading && servers.length === 0 && (
               <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '11px' }}>No servers found</p>
@@ -136,23 +136,23 @@ export default function HomeBaseForm() {
                   key={server.id}
                   onClick={() => router.push(`/home/servers/${server.id}`)}
                   style={{
-                    padding: '8px 12px',
+                    padding: '16px 18px',
                     background: '#8a5a2a',
                     border: '2px solid #61371f',
-                    borderRadius: '6px',
+                    borderRadius: '12px',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: '14px',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px' }}>{server.display_name}</span>
-                    <span style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px' }}>
+                    <span style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '14px' }}>{server.display_name}</span>
+                    <span style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '13px' }}>
                       {server.mc_version || '—'} · {server.profiles?.username || 'Unknown'}
                     </span>
-                    {memberLabel && <span style={{ color: '#8fca5c', fontFamily: 'Space Mono', fontSize: '9px' }}>{memberLabel}</span>}
+                    {memberLabel && <span style={{ color: '#8fca5c', fontFamily: 'Space Mono', fontSize: '13px' }}>{memberLabel}</span>}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                     {isDev && (

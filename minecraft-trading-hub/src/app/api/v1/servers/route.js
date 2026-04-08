@@ -46,6 +46,14 @@ export async function GET(request) {
       return NextResponse.json({ error: ERROR_UNAUTHORIZED }, { status: STATUS_UNAUTHORIZED, headers });
     }
 
+    const { data: callerProfile } = await supabase
+      .from("profiles")
+      .select("is_developer")
+      .eq("id", user.id)
+      .single();
+
+    const isPlatformAdmin = callerProfile?.is_developer === true;
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const limitParam = searchParams.get("limit");
@@ -97,9 +105,11 @@ export async function GET(request) {
 
     const result = (servers || []).map((s) => ({
       ...s,
-      userPermission: permMap[s.id] || (s.owner_id === user.id
-        ? { is_member: true, is_admin: true }
-        : null),
+      userPermission: permMap[s.id] || (
+        isPlatformAdmin || s.owner_id === user.id
+          ? { is_member: true, is_admin: true }
+          : null
+      ),
     }));
 
     return NextResponse.json({ servers: result }, { status: STATUS_OK, headers });

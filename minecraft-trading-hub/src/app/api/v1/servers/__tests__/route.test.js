@@ -70,6 +70,14 @@ describe('/api/v1/servers', () => {
       return { mockSelect };
     }
 
+    // Profile query: .from("profiles").select("is_developer").eq("id", userId).single()
+    function mockCallerProfile({ is_developer = false } = {}) {
+      const mockSingle = jest.fn().mockResolvedValueOnce({ data: { is_developer }, error: null });
+      const mockEq = jest.fn().mockReturnValueOnce({ single: mockSingle });
+      const mockSelect = jest.fn().mockReturnValueOnce({ eq: mockEq });
+      return { mockSelect };
+    }
+
     it('returns 401 if no authorization header', async () => {
       const req = new NextRequest(BASE_URL, { method: 'GET', headers: { Origin: 'http://localhost:3000' } });
       const res = await GET(req);
@@ -90,18 +98,25 @@ describe('/api/v1/servers', () => {
 
     it('returns 400 if limit is invalid', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const res = await GET(makeGetRequest(`${BASE_URL}?limit=abc`));
       expect(res.status).toBe(400);
     });
 
     it('returns 400 if limit is less than 1', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const res = await GET(makeGetRequest(`${BASE_URL}?limit=0`));
       expect(res.status).toBe(400);
     });
 
     it('returns 200 with servers list', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
 
       const { mockSelect: serversSelect } = mockServersQuery();
       mockSupabase.from.mockReturnValueOnce({ select: serversSelect });
@@ -118,6 +133,9 @@ describe('/api/v1/servers', () => {
     it('returns 200 with empty array when no servers', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
+
       const { mockSelect: serversSelect } = mockServersQuery({ data: [] });
       mockSupabase.from.mockReturnValueOnce({ select: serversSelect });
 
@@ -130,6 +148,9 @@ describe('/api/v1/servers', () => {
 
     it('returns 200 with search filter', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
 
       const { mockSelect: serversSelect } = mockServersQueryWithSearch();
       mockSupabase.from.mockReturnValueOnce({ select: serversSelect });
@@ -144,6 +165,9 @@ describe('/api/v1/servers', () => {
     it('returns 500 if servers query fails', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
+
       const { mockSelect: serversSelect } = mockServersQuery({ data: null, error: { message: 'DB error' } });
       mockSupabase.from.mockReturnValueOnce({ select: serversSelect });
 
@@ -155,8 +179,30 @@ describe('/api/v1/servers', () => {
       const ownerUser = { id: 'owner-123', email: 'owner@example.com' };
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: ownerUser }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
+
       const ownedServer = { id: 'srv-1', display_name: 'My Server', owner_id: ownerUser.id };
       const { mockSelect: serversSelect } = mockServersQuery({ data: [ownedServer] });
+      mockSupabase.from.mockReturnValueOnce({ select: serversSelect });
+
+      const { mockSelect: permsSelect } = mockPermsQuery({ data: [] });
+      mockSupabase.from.mockReturnValueOnce({ select: permsSelect });
+
+      const res = await GET(makeGetRequest());
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      expect(data.servers[0].userPermission).toEqual({ is_member: true, is_admin: true });
+    });
+
+    it('gives platform admin full permissions on all servers', async () => {
+      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: true });
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
+
+      const foreignServer = { id: 'srv-foreign', display_name: 'Foreign Server', owner_id: 'someone-else' };
+      const { mockSelect: serversSelect } = mockServersQuery({ data: [foreignServer] });
       mockSupabase.from.mockReturnValueOnce({ select: serversSelect });
 
       const { mockSelect: permsSelect } = mockPermsQuery({ data: [] });

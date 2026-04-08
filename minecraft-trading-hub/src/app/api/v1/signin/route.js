@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { isOriginAllowed } from '../../../lib/serverFunctions';
 import { signIn } from '../../../lib/auth';
+import { createAuthenticatedClient } from '../../../lib/supabaseClient';
 import {
   HEADER_ORIGIN,
   HEADER_ACCESS_CONTROL_ALLOW_METHODS,
@@ -70,6 +71,23 @@ export async function POST(request) {
       return NextResponse.json(
         { error: ERROR_INVALID_CREDENTIALS },
         { status: STATUS_UNAUTHORIZED, headers: corsHeaders(origin) }
+      );
+    }
+
+    // Check if the account is banned before granting access
+    const authedSupabase = createAuthenticatedClient(session.session.access_token);
+    const { data: profile } = await authedSupabase
+      .from('profiles')
+      .select('is_banned')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profile?.is_banned) {
+      // Sign the user back out so the Supabase session is not left active
+      await authedSupabase.auth.signOut();
+      return NextResponse.json(
+        { error: 'Your account has been banned.' },
+        { status: STATUS_FORBIDDEN, headers: corsHeaders(origin) }
       );
     }
 

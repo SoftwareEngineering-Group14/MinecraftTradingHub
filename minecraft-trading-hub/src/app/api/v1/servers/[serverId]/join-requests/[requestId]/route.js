@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { corsHeaders } from "../../../../../../lib/serverFunctions";
-import { createAuthenticatedClient } from "../../../../../../lib/supabaseClient";
+import { createAuthenticatedClient, createAdminClient } from "../../../../../../lib/supabaseClient";
 import {
   STATUS_OK,
   STATUS_BAD_REQUEST,
@@ -91,8 +91,11 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });
     }
 
+    // Use the admin client to bypass RLS for these privileged permission updates
+    const adminClient = createAdminClient();
+
     if (action === "approve") {
-      const { data: updated, error: updateError } = await supabase
+      const { data: updated, error: updateError } = await adminClient
         .from("server_permissions")
         .update({ is_member: true })
         .eq("id", requestId)
@@ -106,7 +109,7 @@ export async function PATCH(request, { params }) {
 
       return NextResponse.json({ permission: updated }, { status: STATUS_OK, headers });
     } else {
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await adminClient
         .from("server_permissions")
         .delete()
         .eq("id", requestId);

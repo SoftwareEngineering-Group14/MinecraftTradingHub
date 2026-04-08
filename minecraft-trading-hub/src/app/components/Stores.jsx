@@ -1,132 +1,95 @@
 "use client";
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '../lib/supabaseClient';
 
-export default function Stores() {
+export default function Stores({ stores = [], currentPage = 1, totalPages = 1 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const serverId = searchParams.get('serverId');
-  const storeId = searchParams.get('storeId');
 
-  const [token, setToken] = useState(null);
-  const [stores, setStores] = useState([]);
-  const [selectedStore, setSelectedStore] = useState(null);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [itemsLoading, setItemsLoading] = useState(false);
-
-  useEffect(() => {
-    createClient().auth.getSession().then(({ data: { session } }) => {
-      setToken(session?.access_token || null);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!token || !serverId) return;
-    setLoading(true);
-    fetch(`/api/v1/${serverId}/stores`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
-      .then((data) => setStores(data.stores || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [token, serverId]);
-
-  useEffect(() => {
-    if (storeId && stores.length > 0) {
-      const store = stores.find((s) => s.id === storeId);
-      if (store) loadStoreItems(store);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId, stores]);
-
-  async function loadStoreItems(store) {
-    setSelectedStore(store);
-    setItems([]);
-    if (!token || !serverId) return;
-    setItemsLoading(true);
-    try {
-      const res = await fetch(`/api/v1/${serverId}/stores/${store.id}/items`, { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      setItems(data.listings || []);
-    } catch {
-      // ignore
-    } finally {
-      setItemsLoading(false);
-    }
-  }
-
-  function handleSelectStore(store) {
-    if (selectedStore?.id === store.id) { setSelectedStore(null); setItems([]); return; }
-    loadStoreItems(store);
-  }
+  const handlePageChange = (page) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', page.toString());
+    router.push(`/home/stores?${params.toString()}`);
+  };
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen">
-      <div className="flex flex-row gap-4 mb-8">
+    <div className="flex flex-col gap-6 min-h-screen px-4 py-8 sm:px-8">
+      <div className="flex flex-row items-center justify-between gap-4 mb-4">
         <button className="green-button" onClick={() => router.push('/home/dashboard')}>
           Back
         </button>
-        <h1 className="heading-pixel text-center mb-8">Search bar here</h1>
+        <h1 className="heading-pixel text-center">Stores</h1>
       </div>
 
-      {!serverId ? (
-        <div className="card-container flex-row">
-          <div className="card flex-1">
-            <h1 className="heading-pixel text-center">stores here</h1>
-            <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '11px', textAlign: 'center' }}>
-              Select a server from HUB to browse stores
-            </p>
-            <button className="green-button" onClick={() => router.push('/home')}>Go to HUB</button>
-          </div>
+      {stores.length === 0 ? (
+        <div className="card p-8 text-center">
+          <p className="heading-pixel">No stores found.</p>
+          <p className="mt-2 text-sm text-[#d8d8d8]">
+            Join a server and open a store first, then return here to view listings for each store.
+          </p>
         </div>
       ) : (
-        <div className="card-container flex-row" style={{ alignItems: 'stretch', maxWidth: '800px', width: '100%' }}>
-          <div className="card flex-1" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <h1 className="heading-pixel text-center" style={{ fontSize: '12px' }}>stores here</h1>
-            {loading && <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '11px' }}>Loading...</p>}
-            {!loading && stores.length === 0 && (
-              <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '11px' }}>No stores found.</p>
-            )}
-            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {stores.map((store) => (
-                <div key={store.id} onClick={() => handleSelectStore(store)}
-                  style={{
-                    padding: '8px 12px',
-                    background: selectedStore?.id === store.id ? '#5a3510' : '#8a5a2a',
-                    border: `2px solid ${selectedStore?.id === store.id ? '#c28340' : '#61371f'}`,
-                    borderRadius: '6px', cursor: 'pointer',
-                  }}>
-                  <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px' }}>{store.name || 'Unnamed Store'}</p>
-                  {store.description && (
-                    <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px', marginTop: '3px' }}>{store.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            {stores.map((store) => (
+              <Link
+                key={store.id}
+                href={`/home/stores/${store.id}`}
+                className="card p-6 border border-[#8fca5c]/30 hover:border-[#8fca5c] transition-colors"
+              >
+                <h2 className="heading-pixel text-xl">{store.name || store.server_name || 'Store'}</h2>
+                {store.server_name ? (
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#a8b293] mt-2">Server: {store.server_name}</p>
+                ) : null}
+                {store.description ? (
+                  <p className="text-sm text-[#d8d8d8] mt-2">{store.description}</p>
+                ) : (
+                  <p className="text-sm text-[#d8d8d8] mt-2">No description available.</p>
+                )}
+                <p className="mt-3 text-xs text-[#a8b293] truncate">ID: {store.id || 'missing'}</p>
+                <p className="mt-4 text-xs uppercase tracking-[0.2em] text-[#a8b293]">
+                  View listings
+                </p>
+              </Link>
+            ))}
           </div>
 
-          <div className="card flex-1" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {!selectedStore ? (
-              <h1 className="heading-pixel text-center" style={{ fontSize: '12px' }}>Select a store</h1>
-            ) : (
-              <>
-                <h1 className="heading-pixel" style={{ fontSize: '11px' }}>{selectedStore.name}</h1>
-                {itemsLoading && <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '11px' }}>Loading items...</p>}
-                {!itemsLoading && items.length === 0 && (
-                  <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '11px' }}>No listings yet.</p>
-                )}
-                <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {items.map((item) => (
-                    <div key={item.id} style={{ padding: '8px 12px', background: '#8a5a2a', border: '2px solid #61371f', borderRadius: '6px' }}>
-                      <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px' }}>{item.name || item.id}</p>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-8">
+              <button
+                className="green-button"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+              >
+                Previous
+              </button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    className={`px-3 py-1 text-sm border rounded ${
+                      page === currentPage
+                        ? 'bg-[#8fca5c] text-black border-[#8fca5c]'
+                        : 'bg-[#8a5a2a] text-[#d8d8d8] border-[#61371f] hover:bg-[#61371f]'
+                    }`}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                className="green-button"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
