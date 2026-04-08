@@ -23,9 +23,15 @@ export default async function StorePage({ params }) {
     );
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_developer')
+    .eq('id', user.id)
+    .single();
+
   const { data: store, error: storeError } = await supabase
     .from('user_stores')
-    .select('id,name,server_name,description,status')
+    .select('id,name,server_name,description,status,server_id,owner_id')
     .eq('id', storeId)
     .eq('status', 'active')
     .single();
@@ -100,9 +106,13 @@ export default async function StorePage({ params }) {
 
   console.log('Store page data:', { storeId, listings, listingItems, itemMeta });
 
+  const canCreateListings = store.owner_id === user.id || profile?.is_developer === true;
+
   return (
     <StoreListings
       store={store}
+      serverId={store.server_id}
+      canCreateListings={canCreateListings}
       listings={listings}
       listingItems={listingItems}
       itemMeta={itemMeta}

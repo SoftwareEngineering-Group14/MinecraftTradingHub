@@ -140,7 +140,18 @@ export async function POST(request, { params }) {
       const { data: server } = await supabase.from("servers").select("owner_id").eq("id", serverId).single();
       isMember = server?.owner_id === user.id;
     }
-    if (!isMember) return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_developer")
+      .eq("id", user.id)
+      .single();
+
+    const isDeveloper = profile?.is_developer === true;
+
+    if (!isMember && !isDeveloper) {
+      return NextResponse.json({ error: "User does not have correct permissions" }, { status: STATUS_FORBIDDEN, headers });
+    }
 
     const { data: store } = await supabase.from("user_stores").select("id").eq("id", storeId).eq("server_id", serverId).single();
     if (!store) return NextResponse.json({ error: ERROR_NOT_FOUND }, { status: STATUS_NOT_FOUND, headers });

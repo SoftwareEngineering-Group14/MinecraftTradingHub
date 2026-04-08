@@ -2,11 +2,73 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { createClient } from '../lib/supabaseClient';
+import { useParams } from "next/navigation";
 
-export default function StoreListings({ store, listings, listingItems, itemMeta }) {
+export default function StoreListings({ store, serverId, canCreateListings, listings: initialListings, listingItems: initialListingItems, itemMeta: initialItemMeta }) {
+  const [token, setToken] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [newItemName, setNewItemName] = useState('');
+  const [newQuantity, setNewQuantity] = useState('');
+  const [newCost, setNewCost] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [listings, setListings] = useState(initialListings || []);
+  const [listingItems, setListingItems] = useState(initialListingItems || []);
+  const [itemMeta, setItemMeta] = useState(initialItemMeta || []);
   const itemsPerPage = 12;
+
+  useEffect(() => {
+    createClient().auth.getSession().then(({ data: { session } }) => {
+      setToken(session?.access_token || null);
+    });
+  }, []);
+
+  useEffect(() => {
+    setListings(initialListings || []);
+    setListingItems(initialListingItems || []);
+    setItemMeta(initialItemMeta || []);
+  }, [initialListings, initialListingItems, initialItemMeta]);
+
+  async function createListing() {
+    if (!token || !serverId || !store?.id || !newItemName.trim()) return;
+
+    setCreating(true);
+    try {
+      const res = await fetch(`/api/v1/${serverId}/stores/${store.id}/items`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newItemName.trim(),
+          quantity: newQuantity ? parseInt(newQuantity, 10) : null,
+          cost: newCost ? parseInt(newCost, 10) : null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Create listing error', data.error);
+        return;
+      }
+
+      if (data.listing) {
+        setListings((prev) => [...prev, data.listing]);
+        setListingItems((prev) => [...prev, ...(data.listing.listing_items || [])]);
+        const newItem = data.listing.listing_items?.map((item) => item.item).filter(Boolean) || [];
+        setItemMeta((prev) => [...prev, ...newItem]);
+        setNewItemName('');
+        setNewQuantity('');
+        setNewCost('');
+      }
+    } catch (err) {
+      console.error('Create listing failed', err);
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const itemsByListing = listingItems.reduce((acc, item) => {
     acc[item.listing_id] = acc[item.listing_id] || [];
@@ -84,12 +146,12 @@ export default function StoreListings({ store, listings, listingItems, itemMeta 
             </div>
           </div>
 
-          <Link href="/home/stores" className="green-button whitespace-nowrap">
+          <Link href={`/home/servers/${serverId}`} className="green-button whitespace-nowrap">
             Back to Stores
           </Link>
         </div>
 
-        <div className="w-full bg-[#5c3b1c] p-4 rounded-xl border border-[#8fca5c]/20 shadow-lg flex justify-center">
+        <div className="w-full bg-[#5c3b1c] p-4 rounded-xl border border-[#8fca5c]/20 shadow-lg flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="w-full md:w-[65%]">
             <input
               type="text"
@@ -102,51 +164,99 @@ export default function StoreListings({ store, listings, listingItems, itemMeta 
               className="auth-input w-full bg-[#2f2a1c] border-[#8fca5c]/40 text-white placeholder:text-[#b7b7b7]"
             />
           </div>
+          {canCreateListings && (
+            <button
+              className="green-button w-full md:w-[30%]"
+              onClick={() => setShowCreateForm((prev) => !prev)}
+            >
+              {showCreateForm ? 'Hide Create' : 'Create Listing'}
+            </button>
+          )}
         </div>
 
-        {currentListings.length === 0 ? (
-          <div className="card w-full p-8 bg-[#3d2a18] border border-[#8fca5c]/20">
-            <p className="heading-pixel">No listings available.</p>
-            <p className="mt-3 text-sm text-[#d8d8d8]">
-              Listings will appear here once they are created.
-            </p>
-          </div>
-        ) : (
-          <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {currentListings.map(({ listing, items }) => (
-              <div key={listing.id} className="card p-4 bg-[#503a1f] border border-[#8fca5c]/20 shadow-lg">
-                <div className="rounded-xl bg-[#0f0d08] p-4">
-                  <div className="mb-3 text-xs uppercase tracking-[0.2em] text-[#a8b293]">
-                    Listing #{listing.id}
-                  </div>
-                  <div className="text-sm text-[#d8d8d8] mb-3 truncate">
-                    {listing.description || 'No listing description'}
-                  </div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-[#a8b293] mb-3">
-                    Item count: {items.length}
-                  </div>
-                  {items.length > 0 ? (
-                    <div className="rounded-lg border border-[#8fca5c]/20 bg-[#1f1b12] p-3 space-y-2">
-                      {items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="font-space-mono text-sm text-[#cfd8c1]">
-                              {itemMap[item.item_id]?.name || `Item ${item.item_id}`}
-                            </p>
-                            <p className="text-xs text-[#a8b293] mt-1">Qty: {item.quantity ?? 0}</p>
-                          </div>
-                          <div className="text-sm font-bold text-[#8fca5c]">{item.cost ?? 0} 🪙</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-[#d8d8d8]">No items attached to this listing yet.</div>
-                  )}
-                </div>
+        <div className="w-full flex flex-col gap-6 xl:flex-row xl:items-start">
+          <div className="flex-1">
+            {currentListings.length === 0 ? (
+              <div className="card w-full p-8 bg-[#3d2a18] border border-[#8fca5c]/20">
+                <p className="heading-pixel">No listings available.</p>
+                <p className="mt-3 text-sm text-[#d8d8d8]">
+                  Listings will appear here once they are created.
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {currentListings.map(({ listing, items }) => (
+                  <div key={listing.id} className="card p-4 bg-[#503a1f] border border-[#8fca5c]/20 shadow-lg">
+                    <div className="rounded-xl bg-[#0f0d08] p-4">
+                      <div className="mb-3 text-xs uppercase tracking-[0.2em] text-[#a8b293]">
+                        Listing #{listing.id}
+                      </div>
+                      <div className="text-sm text-[#d8d8d8] mb-3 truncate">
+                        {listing.description || 'No listing description'}
+                      </div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-[#a8b293] mb-3">
+                        Item count: {items.length}
+                      </div>
+                      {items.length > 0 ? (
+                        <div className="rounded-lg border border-[#8fca5c]/20 bg-[#1f1b12] p-3 space-y-2">
+                          {items.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between gap-2">
+                              <div>
+                                <p className="font-space-mono text-sm text-[#cfd8c1]">
+                                  {itemMap[item.item_id]?.name || `Item ${item.item_id}`}
+                                </p>
+                                <p className="text-xs text-[#a8b293] mt-1">Qty: {item.quantity ?? 0}</p>
+                              </div>
+                              <div className="text-sm font-bold text-[#8fca5c]">{item.cost ?? 0} 🪙</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-[#d8d8d8]">No items attached to this listing yet.</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {canCreateListings && showCreateForm && (
+            <aside className="w-full xl:w-80 flex-shrink-0 bg-[#3b2f1d] rounded-3xl border border-[#8fca5c]/20 p-6 shadow-xl">
+              <h2 className="heading-pixel text-lg mb-4">New Listing</h2>
+              <div className="flex flex-col gap-3">
+                <input
+                  type="text"
+                  placeholder="Item name"
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  className="auth-input w-full bg-[#2f2a1c] border-[#8fca5c]/40 text-white placeholder:text-[#b7b7b7]"
+                />
+                <input
+                  type="number"
+                  placeholder="Quantity"
+                  value={newQuantity}
+                  onChange={(e) => setNewQuantity(e.target.value)}
+                  className="auth-input w-full bg-[#2f2a1c] border-[#8fca5c]/40 text-white placeholder:text-[#b7b7b7]"
+                />
+                <input
+                  type="number"
+                  placeholder="Cost"
+                  value={newCost}
+                  onChange={(e) => setNewCost(e.target.value)}
+                  className="auth-input w-full bg-[#2f2a1c] border-[#8fca5c]/40 text-white placeholder:text-[#b7b7b7]"
+                />
+                <button
+                  className="green-button w-full"
+                  disabled={creating || !newItemName.trim()}
+                  onClick={createListing}
+                >
+                  {creating ? 'Creating...' : 'Create Listing'}
+                </button>
+              </div>
+            </aside>
+          )}
+        </div>
 
         {listingCards.length > 0 ? (
           <div className="w-full flex justify-center">
