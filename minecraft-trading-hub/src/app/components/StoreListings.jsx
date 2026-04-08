@@ -19,20 +19,38 @@ export default function StoreListings({ store, listings, listingItems, itemMeta 
     return acc;
   }, {});
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
   let listingCards = listings.map((listing) => ({
     listing,
     items: itemsByListing[listing.id] || [],
   }));
 
   // Filter based on search query
-  if (searchQuery) {
+  if (normalizedQuery) {
     listingCards = listingCards.filter(({ listing, items }) => {
-      const listingText = `${listing.id} ${listing.description || ''}`.toLowerCase();
-      const itemsText = items
-        .map((item) => `${itemMap[item.item_id]?.name || ''} ${item.cost || ''}`)
+      const listingText = [
+        listing.id,
+        listing.name,
+        listing.description,
+        listing.category,
+      ]
+        .filter(Boolean)
         .join(' ')
         .toLowerCase();
-      return listingText.includes(searchQuery.toLowerCase()) || itemsText.includes(searchQuery.toLowerCase());
+
+      const itemsText = items
+        .map((item) => [
+          itemMap[item.item_id]?.name,
+          item.cost,
+          item.quantity,
+        ]
+          .filter(Boolean)
+          .join(' '))
+        .join(' ')
+        .toLowerCase();
+
+      return listingText.includes(normalizedQuery) || itemsText.includes(normalizedQuery);
     });
   }
 
