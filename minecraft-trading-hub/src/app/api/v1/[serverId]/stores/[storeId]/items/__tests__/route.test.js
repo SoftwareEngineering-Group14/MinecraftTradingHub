@@ -17,6 +17,14 @@ const MOCK_USER = { id: 'user-123', email: 'test@example.com' };
 const DEFAULT_HEADERS = { Origin: 'http://localhost:3000', Authorization: 'Bearer valid-token' };
 const PARAMS = Promise.resolve({ serverId: SERVER_ID, storeId: STORE_ID });
 
+// Mock: .from("profiles").select("is_developer").eq("id", userId).single()
+function mockCallerProfile({ is_developer = false } = {}) {
+  const mockSingle = jest.fn().mockResolvedValueOnce({ data: { is_developer }, error: null });
+  const mockEq = jest.fn().mockReturnValueOnce({ single: mockSingle });
+  const mockSelect = jest.fn().mockReturnValueOnce({ eq: mockEq });
+  return { mockSelect };
+}
+
 // Mock: .from("server_permissions").select("is_member").eq().eq().single()
 function mockPermission({ is_member = true } = {}) {
   const mockSingle = jest.fn().mockResolvedValueOnce({ data: is_member !== null ? { is_member } : null, error: null });
@@ -83,9 +91,10 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
     it('returns 403 if user is not a member and not owner', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: false });
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermission({ is_member: false });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
       const { mockSelect: serverSelect } = mockServerOwner({ owner_id: 'other-user' });
       mockSupabase.from.mockReturnValueOnce({ select: serverSelect });
 
@@ -98,9 +107,10 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
     it('returns 403 if permission record is null and not owner', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: false });
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermission({ is_member: null });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
       const { mockSelect: serverSelect } = mockServerOwner({ owner_id: 'other-user' });
       mockSupabase.from.mockReturnValueOnce({ select: serverSelect });
 
@@ -111,9 +121,10 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
     it('returns 404 if store not found', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermission({ is_member: true });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
       const { mockSelect: storeSelect } = mockStoreExists({ data: null, error: { message: 'Not found' } });
       mockSupabase.from.mockReturnValueOnce({ select: storeSelect });
 
@@ -124,9 +135,10 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
     it('returns 400 if limit is invalid', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermission({ is_member: true });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
       const { mockSelect: storeSelect } = mockStoreExists();
       mockSupabase.from.mockReturnValueOnce({ select: storeSelect });
 
@@ -137,13 +149,13 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
     it('returns 200 with listings', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermission({ is_member: true });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
       const { mockSelect: storeSelect } = mockStoreExists();
       mockSupabase.from.mockReturnValueOnce({ select: storeSelect });
 
-      // listings: .from("listings").select("*, listing_items(*, item(*))").eq("store_id", storeId).limit(limit)
       const mockListings = [{ id: 'listing-1', store_id: STORE_ID }];
       const mockLimit = jest.fn().mockResolvedValueOnce({ data: mockListings, error: null });
       const mockEq = jest.fn().mockReturnValueOnce({ limit: mockLimit });
@@ -159,13 +171,12 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
     it('returns 200 as server owner even without permission record', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermission({ is_member: false });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
-      // User is the owner
       const { mockSelect: serverSelect } = mockServerOwner({ owner_id: MOCK_USER.id });
       mockSupabase.from.mockReturnValueOnce({ select: serverSelect });
-
       const { mockSelect: storeSelect } = mockStoreExists();
       mockSupabase.from.mockReturnValueOnce({ select: storeSelect });
 
@@ -181,9 +192,10 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
     it('returns 500 if listings query fails', async () => {
       mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
 
+      const { mockSelect: profileSelect } = mockCallerProfile();
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
       const { mockSelect: permSelect } = mockPermission({ is_member: true });
       mockSupabase.from.mockReturnValueOnce({ select: permSelect });
-
       const { mockSelect: storeSelect } = mockStoreExists();
       mockSupabase.from.mockReturnValueOnce({ select: storeSelect });
 
@@ -194,6 +206,27 @@ describe('/api/v1/[serverId]/stores/[storeId]/items', () => {
 
       const res = await GET(makeGetRequest(), { params: PARAMS });
       expect(res.status).toBe(500);
+    });
+
+    it('platform admin bypasses membership check and accesses listings', async () => {
+      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: MOCK_USER }, error: null });
+
+      const { mockSelect: profileSelect } = mockCallerProfile({ is_developer: true });
+      mockSupabase.from.mockReturnValueOnce({ select: profileSelect });
+      // No permission or server owner checks for admin
+      const { mockSelect: storeSelect } = mockStoreExists();
+      mockSupabase.from.mockReturnValueOnce({ select: storeSelect });
+
+      const mockListings = [{ id: 'listing-1', store_id: STORE_ID }];
+      const mockLimit = jest.fn().mockResolvedValueOnce({ data: mockListings, error: null });
+      const mockEq = jest.fn().mockReturnValueOnce({ limit: mockLimit });
+      const mockSelect = jest.fn().mockReturnValueOnce({ eq: mockEq });
+      mockSupabase.from.mockReturnValueOnce({ select: mockSelect });
+
+      const res = await GET(makeGetRequest(), { params: PARAMS });
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      expect(data.listings).toEqual(mockListings);
     });
   });
 

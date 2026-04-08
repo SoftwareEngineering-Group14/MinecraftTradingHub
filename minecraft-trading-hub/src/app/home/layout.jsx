@@ -17,12 +17,16 @@ export default async function HomeLayout({ children }) {
 
   const username = user.user_metadata?.username || "Player";
 
-  // fetch coins from profiles table (default to 0 if missing)
+  // fetch coins and ban status from profiles table
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('coins')
+    .select('coins, is_banned')
     .eq('id', user.id)
     .single();
+
+  if (profileData?.is_banned) {
+    redirect('/banned');
+  }
 
   const coins = profileData?.coins ?? 0;
 
@@ -33,7 +37,6 @@ export default async function HomeLayout({ children }) {
         <div className="flex gap-4">
           <Link href="/home" className="hover:text-[#8fca5c] transition-colors">HUB</Link>
           <Link href="/home/profile" className="hover:text-[#8fca5c] transition-colors">PROFILE</Link>
-          <Link href="/home/dashboard" className="hover:text-[#8fca5c] transition-colors">DASHBOARD</Link>
 
         </div>
         

@@ -34,6 +34,10 @@ export default function ProfileForm() {
   const [myServers, setMyServers] = useState([]);
   const [serversLoading, setServersLoading] = useState(false);
 
+  // Inventory
+  const [inventory, setInventory] = useState([]);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+
   const [joinRequests, setJoinRequests] = useState({});
   const [requestsLoading, setRequestsLoading] = useState(false);
 
@@ -42,6 +46,8 @@ export default function ProfileForm() {
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminSearching, setAdminSearching] = useState(false);
   const [adminError, setAdminError] = useState('');
+  const [bannedUsers, setBannedUsers] = useState([]);
+  const [bannedLoading, setBannedLoading] = useState(false);
 
   const router = useRouter();
 
@@ -98,6 +104,7 @@ export default function ProfileForm() {
         setMemberSince(joinDate);
 
         fetchMyServers(accessToken);
+        fetchInventory(accessToken);
       } catch (err) {
         console.error('Error fetching player profile:', err);
         setError('Could not load profile. Please refresh.');
@@ -118,6 +125,25 @@ export default function ProfileForm() {
       setMyServers((data.servers || []).filter((s) => s.userPermission?.is_member));
     } catch { /* ignore */ } finally {
       setServersLoading(false);
+    }
+  }
+
+  async function fetchInventory(accessToken) {
+    const t = accessToken || token;
+    if (!t) return;
+    setInventoryLoading(true);
+    try {
+      const res = await fetch('/api/v1/inventory', { headers: { Authorization: `Bearer ${t}` } });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not load inventory.');
+        return;
+      }
+      setInventory(data.items || []);
+    } catch {
+      setError('Could not load inventory.');
+    } finally {
+      setInventoryLoading(false);
     }
   }
 
@@ -151,34 +177,58 @@ export default function ProfileForm() {
     }
   }
 
+  async function fetchBannedUsers(accessToken) {
+    const t = accessToken || token;
+    if (!t) return;
+    setBannedLoading(true);
+    try {
+      const res = await fetch('/api/v1/admin/users?mode=banned', { headers: { Authorization: `Bearer ${t}` } });
+      const data = await res.json();
+      setBannedUsers(data.users || []);
+    } catch { /* ignore */ } finally {
+      setBannedLoading(false);
+    }
+  }
+
   function handleTabChange(tab) {
     setActiveTab(tab);
     if (tab === 'servers' && myServers.length === 0 && !serversLoading) fetchMyServers();
     if (tab === 'requests' && Object.keys(joinRequests).length === 0 && !requestsLoading) fetchJoinRequests();
+    if (tab === 'admin') fetchBannedUsers();
   }
 
   async function handleApprove(serverId, requestId) {
-    await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
+    const res = await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'approve' }),
     });
-    setJoinRequests((prev) => ({
-      ...prev,
-      [serverId]: { ...prev[serverId], requests: prev[serverId].requests.filter((r) => r.id !== requestId) },
-    }));
+    if (res.ok) {
+      setJoinRequests((prev) => ({
+        ...prev,
+        [serverId]: { ...prev[serverId], requests: prev[serverId].requests.filter((r) => r.id !== requestId) },
+      }));
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(`Failed to approve: ${data.error || 'Unknown error'}`);
+    }
   }
 
   async function handleReject(serverId, requestId) {
-    await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
+    const res = await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reject' }),
     });
-    setJoinRequests((prev) => ({
-      ...prev,
-      [serverId]: { ...prev[serverId], requests: prev[serverId].requests.filter((r) => r.id !== requestId) },
-    }));
+    if (res.ok) {
+      setJoinRequests((prev) => ({
+        ...prev,
+        [serverId]: { ...prev[serverId], requests: prev[serverId].requests.filter((r) => r.id !== requestId) },
+      }));
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(`Failed to reject: ${data.error || 'Unknown error'}`);
+    }
   }
 
   async function handleAdminSearch(e) {
@@ -210,6 +260,13 @@ export default function ProfileForm() {
       setAdminUsers((prev) =>
         prev.map((u) => u.id === targetId ? { ...u, is_banned: !currentlyBanned } : u)
       );
+      if (currentlyBanned) {
+        // User was unbanned — remove from banned list
+        setBannedUsers((prev) => prev.filter((u) => u.id !== targetId));
+      } else {
+        // User was banned — reload banned list
+        fetchBannedUsers();
+      }
     }
   }
 
@@ -263,9 +320,7 @@ export default function ProfileForm() {
     }
   }
 
-  const inventoryGrid = Array.from({ length: 4 }, (_, row) =>
-    Array.from({ length: 6 }, (_, col) => ({ id: `${row}-${col}`, occupied: row === col }))
-  );
+  const inventorySlots = Array.from({ length: 24 }, (_, index) => inventory[index] || null);
 
   const totalPending = Object.values(joinRequests).reduce((acc, { requests }) => acc + requests.length, 0);
 
@@ -416,14 +471,30 @@ export default function ProfileForm() {
 
                 <div className="inventory-card bg-[#6f4321] rounded-2xl p-2">
                   <h3 className="text-xs font-semibold text-[#f0e0c5] mb-2">Inventory</h3>
-                  <div className="grid grid-cols-6 gap-1">
-                    {inventoryGrid.flat().map((cell) => (
-                      <div
-                        key={cell.id}
-                        className={`h-6 rounded-md border ${cell.occupied ? 'bg-[#e7c17a] border-[#8d5d29]' : 'bg-[#bd8f4a] border-[#a67231]'}`}
-                      />
-                    ))}
-                  </div>
+                  {inventoryLoading ? (
+                    <div className="text-[10px] text-[#f0e0c5]">Loading inventory...</div>
+                  ) : (
+                    <div className="grid grid-cols-6 gap-1">
+                      {inventorySlots.map((entry, index) => (
+                        <div
+                          key={entry?.id || `empty-${index}`}
+                          className={`h-12 rounded-md border p-1 flex flex-col justify-between overflow-hidden ${entry ? 'bg-[#e7c17a] border-[#8d5d29]' : 'bg-[#bd8f4a] border-[#a67231]'}`}
+                          title={entry?.item?.name || 'Empty slot'}
+                        >
+                          {entry ? (
+                            <>
+                              <span className="text-[8px] leading-tight text-[#4f310e] font-bold wrap-break-word">
+                                {entry.item?.name || 'Unknown'}
+                              </span>
+                              <span className="text-[8px] text-[#4f310e] font-semibold text-right">
+                                x{entry.quantity ?? 1}
+                              </span>
+                            </>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {error && <p className="text-xs text-red-700 font-bold">{error}</p>}
@@ -561,6 +632,33 @@ export default function ProfileForm() {
                     </button>
                   </div>
                 ))}
+              </div>
+
+              <div className="border-t border-[#b99f7d] pt-4">
+                <h3 className="text-sm font-bold text-[#52331c] mb-3 uppercase tracking-wider">
+                  Banned Users {bannedUsers.length > 0 && `(${bannedUsers.length})`}
+                </h3>
+                {bannedLoading && <p className="text-sm italic text-[#7d5a3c]">Loading...</p>}
+                {!bannedLoading && bannedUsers.length === 0 && (
+                  <p className="text-sm italic text-[#7d5a3c]">No banned users.</p>
+                )}
+                <div className="flex flex-col gap-2">
+                  {bannedUsers.map((u) => (
+                    <div key={u.id} className="bg-[#e8b4b4] rounded-xl p-3 border border-red-300 flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-bold text-[#52331c]">{u.username || u.name || u.id.slice(0, 8)}</p>
+                        <span className="text-[9px] bg-red-700 text-white px-1.5 py-0.5 rounded-full font-bold uppercase">Banned</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleBanToggle(u.id, true)}
+                        className="text-xs bg-green-700 text-white px-3 py-1 rounded-full font-bold hover:bg-green-800 transition"
+                      >
+                        Unban
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

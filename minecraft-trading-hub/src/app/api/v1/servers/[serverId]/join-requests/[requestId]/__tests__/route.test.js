@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import { PATCH, OPTIONS } from '../route';
-import { createAuthenticatedClient } from '@/app/lib/supabaseClient';
+import { createAuthenticatedClient, createAdminClient } from '@/app/lib/supabaseClient';
 
 jest.mock('@/app/lib/supabaseClient', () => ({
   createAuthenticatedClient: jest.fn(),
+  createAdminClient: jest.fn(),
 }));
 
 jest.mock('@/app/lib/serverFunctions', () => ({
@@ -52,6 +53,7 @@ function mockExistingRequest({ data = { id: REQUEST_ID, is_member: false }, erro
 
 describe('/api/v1/servers/[serverId]/join-requests/[requestId]', () => {
   let mockSupabase;
+  let mockAdminSupabase;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -59,7 +61,9 @@ describe('/api/v1/servers/[serverId]/join-requests/[requestId]', () => {
       auth: { getUser: jest.fn() },
       from: jest.fn(),
     };
+    mockAdminSupabase = { from: jest.fn() };
     createAuthenticatedClient.mockReturnValue(mockSupabase);
+    createAdminClient.mockReturnValue(mockAdminSupabase);
   });
 
   describe('OPTIONS', () => {
@@ -141,13 +145,13 @@ describe('/api/v1/servers/[serverId]/join-requests/[requestId]', () => {
       const { mockSelect: existSelect } = mockExistingRequest();
       mockSupabase.from.mockReturnValueOnce({ select: existSelect });
 
-      // Update: .from("server_permissions").update({is_member: true}).eq("id", requestId).select().single()
+      // Update runs on adminClient, not the user-scoped client
       const updated = { id: REQUEST_ID, is_member: true };
       const mockUpdateSingle = jest.fn().mockResolvedValueOnce({ data: updated, error: null });
       const mockUpdateSelect = jest.fn().mockReturnValueOnce({ single: mockUpdateSingle });
       const mockUpdateEq = jest.fn().mockReturnValueOnce({ select: mockUpdateSelect });
       const mockUpdate = jest.fn().mockReturnValueOnce({ eq: mockUpdateEq });
-      mockSupabase.from.mockReturnValueOnce({ update: mockUpdate });
+      mockAdminSupabase.from.mockReturnValueOnce({ update: mockUpdate });
 
       const res = await PATCH(makeRequest({ action: 'approve' }), { params: PARAMS });
       const data = await res.json();
@@ -167,10 +171,10 @@ describe('/api/v1/servers/[serverId]/join-requests/[requestId]', () => {
       const { mockSelect: existSelect } = mockExistingRequest();
       mockSupabase.from.mockReturnValueOnce({ select: existSelect });
 
-      // Delete: .from("server_permissions").delete().eq("id", requestId)
+      // Delete runs on adminClient
       const mockDeleteEq = jest.fn().mockResolvedValueOnce({ error: null });
       const mockDelete = jest.fn().mockReturnValueOnce({ eq: mockDeleteEq });
-      mockSupabase.from.mockReturnValueOnce({ delete: mockDelete });
+      mockAdminSupabase.from.mockReturnValueOnce({ delete: mockDelete });
 
       const res = await PATCH(makeRequest({ action: 'reject' }), { params: PARAMS });
       const data = await res.json();
@@ -194,7 +198,7 @@ describe('/api/v1/servers/[serverId]/join-requests/[requestId]', () => {
       const mockUpdateSelect = jest.fn().mockReturnValueOnce({ single: mockUpdateSingle });
       const mockUpdateEq = jest.fn().mockReturnValueOnce({ select: mockUpdateSelect });
       const mockUpdate = jest.fn().mockReturnValueOnce({ eq: mockUpdateEq });
-      mockSupabase.from.mockReturnValueOnce({ update: mockUpdate });
+      mockAdminSupabase.from.mockReturnValueOnce({ update: mockUpdate });
 
       const res = await PATCH(makeRequest({ action: 'approve' }), { params: PARAMS });
       expect(res.status).toBe(500);
@@ -214,7 +218,7 @@ describe('/api/v1/servers/[serverId]/join-requests/[requestId]', () => {
 
       const mockDeleteEq = jest.fn().mockResolvedValueOnce({ error: { message: 'DB error' } });
       const mockDelete = jest.fn().mockReturnValueOnce({ eq: mockDeleteEq });
-      mockSupabase.from.mockReturnValueOnce({ delete: mockDelete });
+      mockAdminSupabase.from.mockReturnValueOnce({ delete: mockDelete });
 
       const res = await PATCH(makeRequest({ action: 'reject' }), { params: PARAMS });
       expect(res.status).toBe(500);

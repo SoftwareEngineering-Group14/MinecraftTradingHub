@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 
 export default function StoreListings({ store, serverId, canCreateListings, listings: initialListings, listingItems: initialListingItems, itemMeta: initialItemMeta }) {
   const [token, setToken] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [newItemName, setNewItemName] = useState('');
@@ -17,11 +18,14 @@ export default function StoreListings({ store, serverId, canCreateListings, list
   const [listings, setListings] = useState(initialListings || []);
   const [listingItems, setListingItems] = useState(initialListingItems || []);
   const [itemMeta, setItemMeta] = useState(initialItemMeta || []);
+  const [purchasing, setPurchasing] = useState(null);
+  const [purchaseMsg, setPurchaseMsg] = useState('');
   const itemsPerPage = 12;
 
   useEffect(() => {
     createClient().auth.getSession().then(({ data: { session } }) => {
       setToken(session?.access_token || null);
+      setCurrentUserId(session?.user?.id || null);
     });
   }, []);
 
@@ -67,6 +71,31 @@ export default function StoreListings({ store, serverId, canCreateListings, list
       console.error('Create listing failed', err);
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handlePurchase(listingId) {
+    if (!token || !serverId || !store?.id) return;
+    setPurchasing(listingId);
+    setPurchaseMsg('');
+    try {
+      const res = await fetch(`/api/v1/${serverId}/stores/${store.id}/items/${listingId}/purchase`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPurchaseMsg(data.error || 'Purchase failed');
+        return;
+      }
+      // Remove the purchased listing from the UI
+      setListings((prev) => prev.filter((l) => l.id !== listingId));
+      setListingItems((prev) => prev.filter((li) => li.listing_id !== listingId));
+      setPurchaseMsg(`Purchased! Spent ${data.coinsSpent} 🪙. New balance: ${data.newBalance} 🪙`);
+    } catch {
+      setPurchaseMsg('Purchase failed. Please try again.');
+    } finally {
+      setPurchasing(null);
     }
   }
 
@@ -151,6 +180,12 @@ export default function StoreListings({ store, serverId, canCreateListings, list
           </Link>
         </div>
 
+        {purchaseMsg && (
+          <div className={`w-full p-3 rounded-lg text-sm font-space-mono ${purchaseMsg.startsWith('Purchased') ? 'bg-[#2a4a1a] text-[#8fca5c]' : 'bg-[#4a1a1a] text-[#ff8888]'}`}>
+            {purchaseMsg}
+          </div>
+        )}
+
         <div className="w-full bg-[#5c3b1c] p-4 rounded-xl border border-[#8fca5c]/20 shadow-lg flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="w-full md:w-[65%]">
             <input
@@ -213,6 +248,16 @@ export default function StoreListings({ store, serverId, canCreateListings, list
                         </div>
                       ) : (
                         <div className="text-sm text-[#d8d8d8]">No items attached to this listing yet.</div>
+                      )}
+
+                      {currentUserId && store.owner_id !== currentUserId && items.length > 0 && (
+                        <button
+                          className="green-button w-full mt-2"
+                          disabled={purchasing === listing.id}
+                          onClick={() => handlePurchase(listing.id)}
+                        >
+                          {purchasing === listing.id ? 'Buying...' : `Buy for ${items.reduce((s, i) => s + (i.cost ?? 0), 0)} 🪙`}
+                        </button>
                       )}
                     </div>
                   </div>

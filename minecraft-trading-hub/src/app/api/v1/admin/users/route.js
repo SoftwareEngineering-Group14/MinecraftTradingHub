@@ -42,17 +42,30 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
-    if (!search.trim()) {
+    const mode = searchParams.get("mode") || "";
+
+    if (mode !== "banned" && !search.trim()) {
       return NextResponse.json({ error: "Search query is required" }, { status: STATUS_BAD_REQUEST, headers });
     }
 
-    const { data: users, error: usersError } = await supabase
-      .from("profiles")
-      .select("id, username, name, is_banned")
-      .ilike("username", `%${search.trim()}%`)
-      .neq("id", user.id)
-      .limit(20);
+    let query;
+    if (mode === "banned") {
+      query = supabase
+        .from("profiles")
+        .select("id, username, name, is_banned")
+        .eq("is_banned", true)
+        .neq("id", user.id)
+        .limit(50);
+    } else {
+      query = supabase
+        .from("profiles")
+        .select("id, username, name, is_banned")
+        .ilike("username", `%${search.trim()}%`)
+        .neq("id", user.id)
+        .limit(20);
+    }
 
+    const { data: users, error: usersError } = await query;
     if (usersError) return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
 
     return NextResponse.json({ users: users || [] }, { status: STATUS_OK, headers });

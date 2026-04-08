@@ -99,21 +99,31 @@ export default function ServerPage() {
   }
 
   async function handleApprove(requestId) {
-    await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
+    const res = await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'approve' }),
     });
-    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    if (res.ok) {
+      setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(`Failed to approve: ${data.error || 'Unknown error'}`);
+    }
   }
 
   async function handleReject(requestId) {
-    await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
+    const res = await fetch(`/api/v1/servers/${serverId}/join-requests/${requestId}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reject' }),
     });
-    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    if (res.ok) {
+      setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(`Failed to reject: ${data.error || 'Unknown error'}`);
+    }
   }
 
   async function handleDeleteStore(e, storeId) {
@@ -156,9 +166,9 @@ export default function ServerPage() {
     }
   }
 
-  const isMember = permission?.is_member;
-  const isPending = permission != null && !isMember;
-  const isAdmin = permission?.is_admin;
+  const isMember = permission?.is_member || isDev;
+  const isPending = !isDev && permission != null && !permission?.is_member;
+  const isAdmin = permission?.is_admin || isDev;
 
   if (loading) {
     return (
