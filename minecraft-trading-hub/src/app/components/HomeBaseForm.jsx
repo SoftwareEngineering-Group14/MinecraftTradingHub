@@ -112,7 +112,7 @@ export default function HomeBaseForm() {
           <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {loading && <p style={{ color: '#fff', fontFamily: 'Space Mono', fontSize: '11px' }}>Loading...</p>}
             {!loading && servers.length === 0 && (
-              <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '11px' }}>No servers found</p>
+              <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '12px' }}>No servers found</p>
             )}
             {servers.map((server) => {
               const sp = server.userPermission;
@@ -134,11 +134,11 @@ export default function HomeBaseForm() {
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px' }}>{server.display_name}</span>
-                    <span style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px' }}>
+                    <span style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '11px' }}>{server.display_name}</span>
+                    <span style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '10px' }}>
                       {server.mc_version || '—'} · {server.profiles?.username || 'Unknown'}
                     </span>
-                    {memberLabel && <span style={{ color: '#8fca5c', fontFamily: 'Space Mono', fontSize: '9px' }}>{memberLabel}</span>}
+                    {memberLabel && <span style={{ color: '#8fca5c', fontFamily: 'Space Mono', fontSize: '10px' }}>{memberLabel}</span>}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                     {isDev && (

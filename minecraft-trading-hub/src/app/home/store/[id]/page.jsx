@@ -43,16 +43,16 @@ function ListingCard({ listing, selected, onSelect, isDev, onDelete }) {
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {title}
         </p>
-        <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px', marginTop: '2px' }}>
+        <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '11px', marginTop: '2px' }}>
           Qty: {quantity ?? '—'}
         </p>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
         {price != null && (
-          <span style={{ color: '#8fca5c', fontFamily: 'Press Start 2P', fontSize: '8px' }}>
+          <span style={{ color: '#8fca5c', fontFamily: 'Press Start 2P', fontSize: '10px' }}>
             {price} 🪙
           </span>
         )}
@@ -257,18 +257,19 @@ export default function StorePage() {
   }
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <div style={{ width: '100%', maxWidth: '800px', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="flex justify-center items-center h-screen w-1/2">
+      <div className="flex flex-col h-3/4 w-full" 
+      style={{ width: '100%', padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="green-button" onClick={() => router.back()} style={{ fontSize: '9px', padding: '6px 12px' }}>
+          <button className="green-button" onClick={() => router.back()} style={{ fontSize: '11px', padding: '6px 12px' }}>
             ← Back
           </button>
-          <h1 className="heading-pixel" style={{ fontSize: '11px', flex: 1 }}>{store?.name || 'Store'}</h1>
+          <h1 className="heading-pixel" style={{ fontSize: '12px', flex: 1 }}>{store?.name || 'Store'}</h1>
           {(isOwner || isDev) && (
             <button
               className="green-button"
-              style={{ fontSize: '9px', padding: '6px 12px' }}
+              style={{ fontSize: '11px', padding: '6px 12px' }}
               onClick={() => { setShowAddForm((v) => !v); setSelectedListing(null); }}
             >
               {showAddForm ? 'Cancel' : '+ Add Item'}
@@ -276,11 +277,11 @@ export default function StorePage() {
           )}
         </div>
 
-        <div className="card-container flex-row" style={{ alignItems: 'stretch', minHeight: '400px' }}>
+        <div className="card-container flex-row h-full w-full" style={{ alignItems: 'stretch', minHeight: '400px' }}>
 
           {/* Left: listing list */}
           <div className="card flex-1" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <h2 className="heading-pixel" style={{ fontSize: '9px' }}>Items ({listings.length})</h2>
+            <h2 className="heading-pixel" style={{ fontSize: '11px' }}>Items ({listings.length})</h2>
             {listings.length === 0 && (
               <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '10px' }}>No items yet.</p>
             )}
