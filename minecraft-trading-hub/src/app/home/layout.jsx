@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 // AUTH LEAD: Corrected the typo in your import to match your filename
 import LogOutForm from '../components/LogOutForm';
+import CoinDisplay from '../components/CoinDisplay';
 
 export default async function HomeLayout({ children }) {
   // 1. Use your new utility (handles the Next.js 16 async cookie requirement)
@@ -41,9 +42,7 @@ export default async function HomeLayout({ children }) {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="px-3 py-1 rounded-lg border border-[#8fca5c] bg-[#4e6a1d] text-xs text-white font-space-mono">
-            {coins} 🪙
-          </div>
+          <CoinDisplay initialCoins={coins} />
           <Link href="/home/profile" className="hover:text-[#8fca5c] transition-colors">
             <span className="text-sm font-space-mono text-white cursor-pointer hover:text-[#8fca5c]/80 transition-colors">
               {username.toUpperCase()}
