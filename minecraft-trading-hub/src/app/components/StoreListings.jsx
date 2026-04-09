@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { createClient } from '../lib/supabaseClient';
-import { useParams } from "next/navigation";
 
 export default function StoreListings({ store, serverId, canCreateListings, listings: initialListings, listingItems: initialListingItems, itemMeta: initialItemMeta }) {
   const [token, setToken] = useState(null);
@@ -20,6 +19,7 @@ export default function StoreListings({ store, serverId, canCreateListings, list
   const [itemMeta, setItemMeta] = useState(initialItemMeta || []);
   const [purchasing, setPurchasing] = useState(null);
   const [purchaseMsg, setPurchaseMsg] = useState('');
+  const [buyQuantities, setBuyQuantities] = useState({});
   const itemsPerPage = 12;
 
   useEffect(() => {
@@ -74,24 +74,37 @@ export default function StoreListings({ store, serverId, canCreateListings, list
     }
   }
 
-  async function handlePurchase(listingId) {
+  async function handlePurchase(listingId, quantity) {
     if (!token || !serverId || !store?.id) return;
     setPurchasing(listingId);
     setPurchaseMsg('');
     try {
       const res = await fetch(`/api/v1/${serverId}/stores/${store.id}/items/${listingId}/purchase`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity }),
       });
       const data = await res.json();
       if (!res.ok) {
         setPurchaseMsg(data.error || 'Purchase failed');
         return;
       }
-      // Remove the purchased listing from the UI
-      setListings((prev) => prev.filter((l) => l.id !== listingId));
-      setListingItems((prev) => prev.filter((li) => li.listing_id !== listingId));
-      setPurchaseMsg(`Purchased! Spent ${data.coinsSpent} 🪙. New balance: ${data.newBalance} 🪙`);
+      if (data.listingDeleted) {
+        setListings((prev) => prev.filter((l) => l.id !== listingId));
+        setListingItems((prev) => prev.filter((li) => li.listing_id !== listingId));
+      } else {
+        // Update the remaining quantity in state
+        setListingItems((prev) =>
+          prev.map((li) =>
+            li.listing_id === listingId
+              ? { ...li, quantity: (li.quantity ?? 0) - quantity }
+              : li
+          )
+        );
+      }
+      setBuyQuantities((prev) => ({ ...prev, [listingId]: 1 }));
+      window.dispatchEvent(new CustomEvent('coinBalanceUpdated', { detail: { newBalance: data.newBalance } }));
+      setPurchaseMsg(`Purchased ${quantity}x! Spent ${data.coinsSpent} 🪙. New balance: ${data.newBalance} 🪙`);
     } catch {
       setPurchaseMsg('Purchase failed. Please try again.');
     } finally {
@@ -252,9 +265,9 @@ export default function StoreListings({ store, serverId, canCreateListings, list
                                 <p className="font-space-mono text-sm text-[#cfd8c1]">
                                   {itemMap[item.item_id]?.name || `Item ${item.item_id}`}
                                 </p>
-                                <p className="text-xs text-[#a8b293] mt-1">Qty: {item.quantity ?? 0}</p>
+                                <p className="text-xs text-[#a8b293] mt-1">Stock: {item.quantity ?? 0}</p>
                               </div>
-                              <div className="text-sm font-bold text-[#8fca5c]">{item.cost ?? 0} 🪙</div>
+                              <div className="text-sm font-bold text-[#8fca5c]">{item.cost ?? 0} 🪙 / unit</div>
                             </div>
                           ))}
                         </div>
@@ -262,15 +275,37 @@ export default function StoreListings({ store, serverId, canCreateListings, list
                         <div className="text-sm text-[#d8d8d8]">No items attached to this listing yet.</div>
                       )}
 
-                      {currentUserId && store.owner_id !== currentUserId && items.length > 0 && (
-                        <button
-                          className="green-button w-full mt-2"
-                          disabled={purchasing === listing.id}
-                          onClick={() => handlePurchase(listing.id)}
-                        >
-                          {purchasing === listing.id ? 'Buying...' : `Buy for ${items.reduce((s, i) => s + (i.cost ?? 0), 0)} 🪙`}
-                        </button>
-                      )}
+                      {currentUserId && store.owner_id !== currentUserId && items.length > 0 && (() => {
+                        const maxQty = Math.min(...items.map((i) => i.quantity ?? 1));
+                        const unitCost = items.reduce((s, i) => s + (i.cost ?? 0), 0);
+                        const selectedQty = buyQuantities[listing.id] ?? 1;
+                        const totalCost = selectedQty * unitCost;
+                        return (
+                          <div className="mt-3 flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs text-[#a8b293] whitespace-nowrap">Qty:</label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={maxQty}
+                                value={selectedQty}
+                                onChange={(e) => {
+                                  const v = Math.max(1, Math.min(maxQty, parseInt(e.target.value, 10) || 1));
+                                  setBuyQuantities((prev) => ({ ...prev, [listing.id]: v }));
+                                }}
+                                className="auth-input w-full bg-[#2f2a1c] border-[#8fca5c]/40 text-white text-sm py-1"
+                              />
+                            </div>
+                            <button
+                              className="green-button w-full"
+                              disabled={purchasing === listing.id}
+                              onClick={() => handlePurchase(listing.id, selectedQty)}
+                            >
+                              {purchasing === listing.id ? 'Buying...' : `Buy ${selectedQty}x for ${totalCost} 🪙`}
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
