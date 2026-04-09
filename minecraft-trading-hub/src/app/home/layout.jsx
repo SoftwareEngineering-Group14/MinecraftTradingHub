@@ -36,8 +36,8 @@ export default async function HomeLayout({ children }) {
       {/* Shared Navigation Header */}
       <header className="header">
         <div className="flex gap-4">
-          <Link href="/home" className="hover:text-[#8fca5c] transition-colors">HUB</Link>
-          <Link href="/home/profile" className="hover:text-[#8fca5c] transition-colors">PROFILE</Link>
+          <Link href="/home" className="hover:text-[#000000] transition-colors">HUB</Link>
+          <Link href="/home/profile" className="hover:text-[#000000] transition-colors">PROFILE</Link>
 
         </div>
         
