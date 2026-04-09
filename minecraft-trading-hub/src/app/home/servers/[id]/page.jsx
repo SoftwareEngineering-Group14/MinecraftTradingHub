@@ -271,37 +271,50 @@ export default function ServerPage() {
                   <div
                     key={store.id}
                     onClick={() => router.push(`/home/stores/${store.id}`)}
-                    style={{
-                      padding: '8px 12px',
-                      background: '#8a5a2a',
-                      border: '2px solid #61371f',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
+                    className="
+                      bg-[url('/minecraft_sign.jpg')] 
+                      bg-cover 
+                      bg-center 
+                      border-4 
+                      border-[#3b2511] 
+                      shadow-[0_4px_6px_-1px_rgba(0,0,0,0.7)] 
+                      rounded-md 
+                      cursor-pointer
+                    "
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px' }}>{store.name || 'Unnamed Store'}</p>
-                      {store.description && (
-                        <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px', marginTop: '3px' }}>
-                          {store.description.length > 50 ? store.description.slice(0, 48) + '…' : store.description}
+                    {/* Inner semi-transparent dark layer to ensure white text remains readable over the wood */}
+                    <div 
+                      className="bg-black/40 w-full h-full p-2"
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ color: '#fff', fontFamily: 'Press Start 2P', fontSize: '8px' }}>
+                          {store.name || 'Unnamed Store'}
                         </p>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                      {isDev && (
-                        <button
-                          onClick={(e) => handleDeleteStore(e, store.id)}
-                          style={{ padding: '2px 7px', background: '#7a1c1c', border: '2px solid #5a0e0e', borderRadius: '4px', color: '#ffaaaa', fontFamily: 'Space Mono', fontSize: '11px', cursor: 'pointer', lineHeight: 1 }}
-                          title="Delete store"
-                        >
-                          ✕
-                        </button>
-                      )}
-                      <span style={{ color: '#8fca5c', fontFamily: 'Space Mono', fontSize: '12px' }}>▶</span>
+                        {store.description && (
+                          <p style={{ color: '#e0c090', fontFamily: 'Space Mono', fontSize: '9px', marginTop: '3px' }}>
+                            {store.description.length > 50 ? store.description.slice(0, 48) + '…' : store.description}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        {isDev && (
+                          <button
+                            onClick={(e) => handleDeleteStore(e, store.id)}
+                            style={{ padding: '2px 7px', background: '#7a1c1c', border: '2px solid #5a0e0e', borderRadius: '4px', color: '#ffaaaa', fontFamily: 'Space Mono', fontSize: '11px', cursor: 'pointer', lineHeight: 1 }}
+                            title="Delete store"
+                          >
+                            ✕
+                          </button>
+                        )}
+                        <span style={{ color: '#8fca5c', fontFamily: 'Space Mono', fontSize: '12px' }}>▶</span>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -221,8 +221,20 @@ export default function StoreListings({ store, serverId, canCreateListings, list
             ) : (
               <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {currentListings.map(({ listing, items }) => (
-                  <div key={listing.id} className="card p-4 bg-[#503a1f] border border-[#8fca5c]/20 shadow-lg">
-                    <div className="rounded-xl bg-[#0f0d08] p-4">
+                  <div 
+                    key={listing.id} 
+                    className="
+                      bg-[url('/minecraft_sign.jpg')] 
+                      bg-cover 
+                      bg-center 
+                      p-4 
+                      border-4 
+                      border-[#3b2511] 
+                      shadow-[0_10px_15px_-3px_rgba(0,0,0,0.7)] 
+                      rounded-md
+                    "
+                  >
+                    <div className="rounded-xl bg-black/40 p-4">
                       <div className="mb-3 text-xs uppercase tracking-[0.2em] text-[#a8b293]">
                         Listing #{listing.id}
                       </div>
