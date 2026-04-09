@@ -97,7 +97,23 @@ export async function POST(request, { params }) {
     }
 
     const listingItems = listing.listing_items || [];
-    const totalCost = listingItems.reduce((sum, li) => sum + (li.cost ?? 0), 0);
+
+    const body = await request.json().catch(() => ({}));
+    const purchaseQuantity = Math.max(1, parseInt(body.quantity ?? 1, 10));
+
+    // Validate requested quantity against available stock
+    for (const li of listingItems) {
+      const available = li.quantity ?? 1;
+      if (purchaseQuantity > available) {
+        return NextResponse.json(
+          { error: `Requested quantity (${purchaseQuantity}) exceeds available stock (${available}).` },
+          { status: STATUS_BAD_REQUEST, headers }
+        );
+      }
+    }
+
+    // Cost is per-unit; total = purchaseQuantity * sum of per-unit costs
+    const totalCost = listingItems.reduce((sum, li) => sum + (li.cost ?? 0), 0) * purchaseQuantity;
 
     // Check buyer's coin balance
     const { data: buyerProfile } = await supabase
@@ -154,7 +170,7 @@ export async function POST(request, { params }) {
       if (existing) {
         const { error: updateInvError } = await supabase
           .from("inventory_items")
-          .update({ quantity: existing.quantity + (li.quantity ?? 1) })
+          .update({ quantity: existing.quantity + purchaseQuantity })
           .eq("id", existing.id);
         if (updateInvError) {
           console.error("Inventory update error:", updateInvError);
@@ -163,7 +179,7 @@ export async function POST(request, { params }) {
       } else {
         const { error: insertInvError } = await supabase
           .from("inventory_items")
-          .insert({ owner_id: user.id, item_id: li.item_id, quantity: li.quantity ?? 1 });
+          .insert({ owner_id: user.id, item_id: li.item_id, quantity: purchaseQuantity });
         if (insertInvError) {
           console.error("Inventory insert error:", insertInvError);
           return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
@@ -171,21 +187,35 @@ export async function POST(request, { params }) {
       }
     }
 
-    // Delete the listing (listing_items rows first due to FK, then the listing)
-    const { error: listingItemsDeleteError } = await supabase.from("listing_items").delete().eq("listing_id", listingId);
-    if (listingItemsDeleteError) {
-      console.error("Listing items delete error:", listingItemsDeleteError);
-      return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
-    }
+    // Reduce listing stock; delete listing only when fully depleted
+    const allDepleted = listingItems.every((li) => (li.quantity ?? 1) - purchaseQuantity <= 0);
 
-    const { error: listingDeleteError } = await supabase.from("listings").delete().eq("id", listingId);
-    if (listingDeleteError) {
-      console.error("Listing delete error:", listingDeleteError);
-      return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+    if (allDepleted) {
+      const { error: listingItemsDeleteError } = await supabase.from("listing_items").delete().eq("listing_id", listingId);
+      if (listingItemsDeleteError) {
+        console.error("Listing items delete error:", listingItemsDeleteError);
+        return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+      }
+      const { error: listingDeleteError } = await supabase.from("listings").delete().eq("id", listingId);
+      if (listingDeleteError) {
+        console.error("Listing delete error:", listingDeleteError);
+        return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+      }
+    } else {
+      for (const li of listingItems) {
+        const { error: updateQtyError } = await supabase
+          .from("listing_items")
+          .update({ quantity: (li.quantity ?? 1) - purchaseQuantity })
+          .eq("id", li.id);
+        if (updateQtyError) {
+          console.error("Listing quantity update error:", updateQtyError);
+          return NextResponse.json({ error: ERROR_INTERNAL_SERVER }, { status: STATUS_INTERNAL_SERVER_ERROR, headers });
+        }
+      }
     }
 
     return NextResponse.json(
-      { success: true, coinsSpent: totalCost, newBalance: (buyerProfile.coins ?? 0) - totalCost },
+      { success: true, coinsSpent: totalCost, newBalance: (buyerProfile.coins ?? 0) - totalCost, listingDeleted: allDepleted },
       { status: STATUS_OK, headers }
     );
   } catch (err) {
